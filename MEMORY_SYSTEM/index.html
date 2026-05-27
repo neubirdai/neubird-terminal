@@ -1,0 +1,2017 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AI-powered SRE platform. Connects to your telemetry databases and investigates incidents, health, cost, and performance using natural language.">
+      
+      
+      
+        <link rel="canonical" href="https://neubirdai.github.io/neubird-desktop/MEMORY_SYSTEM/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/icon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Memory System — How Falcon Learns and Remembers - NeuBird Desktop</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/neubird.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#memory-system-how-falcon-learns-and-remembers" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner">
+          <div class="md-banner__inner md-grid md-typeset">
+            
+            
+  <strong>Developer Preview</strong> &mdash; NeuBird Desktop is currently in developer preview. APIs and configuration options may change.
+
+          </div>
+          
+        </aside>
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="NeuBird Desktop" class="md-header__button md-logo" aria-label="NeuBird Desktop" data-md-component="logo">
+      
+  <img src="../assets/icon.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            NeuBird Desktop
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Memory System — How Falcon Learns and Remembers
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/neubirdai/falcon" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    neubirdai/falcon
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../getting-started/installation/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../features/investigations/" class="md-tabs__link">
+          
+  
+  
+  Features
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../usage/tui/" class="md-tabs__link">
+          
+  
+  
+  Usage
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="NeuBird Desktop" class="md-nav__button md-logo" aria-label="NeuBird Desktop" data-md-component="logo">
+      
+  <img src="../assets/icon.svg" alt="logo">
+
+    </a>
+    NeuBird Desktop
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/neubirdai/falcon" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    neubirdai/falcon
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Features
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/investigations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agentic Investigations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/headless-investigations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Headless Investigations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/health-sweeps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Health Sweeps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/cost-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cost Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/predictive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Predictive Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/preventive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Preventive Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/agent-personas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Personas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/tool-review/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tool Review (Ctrl+O)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/persistent-learning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Persistent Learning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/tui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terminal UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/slash-commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Slash Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/keyboard-shortcuts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Keyboard Shortcuts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/agent-personas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Personas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memory-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory Types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#database-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database Schema
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Database Schema">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#raw-tables-write-first-unprocessed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Raw Tables (write-first, unprocessed)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consolidated-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consolidated Store
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-scoping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Scoping
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ace-tools-mcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ACE Tools (MCP)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ACE Tools (MCP)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#save_learnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        save_learnings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_relevant_learnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_relevant_learnings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update_memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        update_memory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list_unassimilated_learnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        list_unassimilated_learnings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#describe_table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        describe_table
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update_learning_assimilation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        update_learning_assimilation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agents
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Agents">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#memoryassimilator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MemoryAssimilator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execlearningsagent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ExecLearningsAgent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#assimilation-per-type-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assimilation: Per-Type Logic
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Assimilation: Per-Type Logic">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sql-learnings-memory-sql-learnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SQL Learnings (memory-sql-learnings)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#table-learnings-memory-table-learnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table Learnings (memory-table-learnings)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-insights-memory-user-insights" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User Insights (memory-user-insights)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#forget-requests-memory-forget-requests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forget Requests (memory-forget-requests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tool-learnings-memory-tool-learnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tool Learnings (memory-tool-learnings)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#full-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#learning-queue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Learning Queue
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-design-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Design Decisions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Files
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Key Files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ace-go-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ACE (Go backend)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#desktop-falcon-go-server-agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Desktop / Falcon (Go server + agents)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="memory-system-how-falcon-learns-and-remembers">Memory System — How Falcon Learns and Remembers</h1>
+<p>This document explains how Falcon accumulates knowledge across investigations — from raw capture by agents to background assimilation into a searchable, vector-backed memory store.</p>
+<hr />
+<h2 id="overview">Overview</h2>
+<p>Falcon uses a <strong>two-phase memory architecture</strong> to turn observations from investigations into durable, reusable knowledge:</p>
+<ol>
+<li><strong>Raw capture</strong> — agents write learnings in real-time during investigations</li>
+<li><strong>Assimilation</strong> — a background job consolidates and embeds raw learnings into a searchable store</li>
+</ol>
+<p>Memories are scoped strictly to a project, persist across sessions, and are retrieved at investigation time to guide agents toward better answers.</p>
+<hr />
+<h2 id="memory-types">Memory Types</h2>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>What it stores</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>sql</strong></td>
+<td>Query patterns and rules for specific tables/schemas</td>
+<td>"Always filter <code>events</code> by <code>org_id</code> first for performance"</td>
+</tr>
+<tr>
+<td><strong>table</strong></td>
+<td>Which tables map to which investigation scenarios</td>
+<td>"Use <code>deployments</code> + <code>rollbacks</code> for deploy-regression queries"</td>
+</tr>
+<tr>
+<td><strong>user_insight</strong></td>
+<td>User corrections, preferences, patterns, and derived facts</td>
+<td>"User prefers percentile breakdowns over averages for latency"</td>
+</tr>
+<tr>
+<td><strong>tool</strong></td>
+<td>Syntax error patterns for specific tools</td>
+<td>"Pass <code>tables</code> as an array of strings, not comma-separated"</td>
+</tr>
+</tbody>
+</table>
+<p>User insights have four subtypes: <code>preference</code>, <code>knowledge</code>, <code>correction</code>, <code>pattern</code>.</p>
+<hr />
+<h2 id="database-schema">Database Schema</h2>
+<p>All memory lives in the <code>ace</code> PostgreSQL schema, backed by the <code>pgvector</code> extension.</p>
+<h3 id="raw-tables-write-first-unprocessed">Raw Tables (write-first, unprocessed)</h3>
+<pre><code class="language-text">ace.sql_learnings        — SQL rules keyed by schema_table_type
+ace.table_learnings      — scenario-to-table mappings with investigation context
+ace.user_insights        — user corrections, preferences, facts
+ace.tool_learnings       — tool syntax error patterns keyed by tool_name
+</code></pre>
+<p>All four tables carry a <code>project_uuid TEXT NOT NULL</code> column (added in migration <code>20260521000001_learnings_project_uuid</code>). Every raw row starts with <code>assimilated_at IS NULL</code>. The background job sets this field once the row has been consolidated.</p>
+<p>Partial indexes on <code>(project_uuid) WHERE assimilated_at IS NULL</code> enable fast per-project discovery of pending work.</p>
+<h3 id="consolidated-store">Consolidated Store</h3>
+<pre><code class="language-text">ace.assimilated_learnings
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>UUID</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td><code>project_uuid</code></td>
+<td>TEXT</td>
+<td>Project this memory belongs to (strict equality filter)</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>TEXT</td>
+<td><code>sql</code> | <code>table</code> | <code>user_insight</code> | <code>tool</code></td>
+</tr>
+<tr>
+<td><code>learning</code></td>
+<td>TEXT</td>
+<td>The consolidated knowledge</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td>TEXT</td>
+<td>1–2 sentence executive summary</td>
+</tr>
+<tr>
+<td><code>embedding</code></td>
+<td>vector(512)</td>
+<td>Semantic vector for similarity search</td>
+</tr>
+<tr>
+<td><code>confidence</code></td>
+<td>FLOAT</td>
+<td>0.0–1.0, set by the assimilation agent</td>
+</tr>
+<tr>
+<td><code>source_ids</code></td>
+<td>TEXT[]</td>
+<td>Back-references to raw row IDs</td>
+</tr>
+<tr>
+<td><code>trigger</code></td>
+<td>TEXT</td>
+<td><code>"always"</code> = return on every query (for critical user preferences)</td>
+</tr>
+<tr>
+<td><code>schema_table_type</code></td>
+<td>TEXT</td>
+<td>Lookup key for SQL learnings</td>
+</tr>
+<tr>
+<td><code>investigation_type</code></td>
+<td>TEXT</td>
+<td>Context for table learnings</td>
+</tr>
+<tr>
+<td><code>insight_type</code></td>
+<td>TEXT</td>
+<td>Subtype for user insights</td>
+</tr>
+<tr>
+<td><code>tool_name</code></td>
+<td>TEXT</td>
+<td>Lookup key for tool learnings</td>
+</tr>
+<tr>
+<td><code>deleted_at</code></td>
+<td>TIMESTAMPTZ</td>
+<td>Soft-delete timestamp</td>
+</tr>
+</tbody>
+</table>
+<p>An HNSW index on <code>embedding</code> and a partial index on <code>project_uuid WHERE deleted_at IS NULL</code> support fast retrieval.</p>
+<hr />
+<h2 id="project-scoping">Project Scoping</h2>
+<p>All memory is strictly scoped to a single project. Every read and write operation filters by <code>project_uuid = $N</code> — there is no fallback to empty-UUID rows or cross-project sharing.</p>
+<ul>
+<li><strong>Raw tables</strong> — <code>project_uuid</code> stored on insert; unassimilated queries filter by it</li>
+<li><strong>Assimilated store</strong> — all search, upsert, merge, and delete operations include <code>WHERE project_uuid = $N</code></li>
+<li><strong>save_learnings tool</strong> — reads <code>project_uuid</code> from MCP args or the current session</li>
+<li><strong>list_unassimilated_learnings</strong> — filters by <code>project_uuid</code> when provided, so the MemoryAssimilator pre-hook only fires for projects that actually have pending work</li>
+</ul>
+<p>This was tightened in <a href="https://github.com/neubirdai/ace/pull/276">#276</a>, which removed the backward-compatibility <code>IN ($projectUUID, '')</code> fallback and added <code>project_uuid</code> to all three raw tables.</p>
+<hr />
+<h2 id="ace-tools-mcp">ACE Tools (MCP)</h2>
+<p>All memory operations are exposed as MCP tools, implemented in <code>ace/tools/</code>.</p>
+<h3 id="save_learnings"><code>save_learnings</code></h3>
+<p>Writes a raw learning to the appropriate raw table.</p>
+<pre><code class="language-text">save_learnings(type, content, ...)
+  → writes to sql_learnings, table_learnings, user_insights, or tool_learnings
+  → stores project_uuid from MCP args or session context
+  → assimilated_at = NULL (pending)
+  → returns {&quot;status&quot;: &quot;ok&quot;, &quot;type&quot;: &quot;&lt;type&gt;&quot;}
+</code></pre>
+<p>Called by agents during or after investigations. Non-blocking.</p>
+<p><strong>Source:</strong> <a href="https://github.com/neubirdai/ace/blob/main/tools/save_memory/mcp_tool_save_memory.go"><code>ace/tools/save_memory/mcp_tool_save_memory.go</code></a></p>
+<hr />
+<h3 id="load_relevant_learnings"><code>load_relevant_learnings</code></h3>
+<p>Retrieves ranked learnings from <code>assimilated_learnings</code> using hybrid search, scoped to <code>project_uuid</code>.</p>
+<pre><code class="language-text">load_relevant_learnings(query, type?, min_score?, include_raw?)
+  → hybrid: vector similarity (HNSW) + text search (ts_rank) via RRF
+  → fallback: keyword-only if embedding unavailable
+  → returns ranked entries with relevance_score, confidence, source
+</code></pre>
+<p><strong>Search strategy per type:</strong></p>
+<ul>
+<li><strong>SQL</strong> — exact match on <code>schema_table_type</code> (no vector needed)</li>
+<li><strong>Table</strong> — Reciprocal Rank Fusion (RRF) of vector + text, blended with confidence: <code>0.75 × RRF + 0.25 × confidence</code></li>
+<li><strong>User insights</strong> — vector similarity + always-trigger records appended</li>
+<li><strong>Tool</strong> — exact match on <code>tool_name</code>, or semantic query when <code>tool_name</code> is omitted</li>
+</ul>
+<p>Pass <code>include_raw=true</code> during assimilation to also see raw rows that haven't been written yet, enabling deduplication within the current batch.</p>
+<p>Returns up to 10 learnings per type, filtered at min relevance 0.35.</p>
+<p><strong>Source:</strong> <a href="https://github.com/neubirdai/ace/blob/main/tools/load_relevant/mcp_tool_load_relevant.go"><code>ace/tools/load_relevant/mcp_tool_load_relevant.go</code></a></p>
+<hr />
+<h3 id="update_memory"><code>update_memory</code></h3>
+<p>Deletes or modifies an existing memory. Called when a user corrects an agent.</p>
+<pre><code class="language-text">update_memory(id, action)
+  → id: UUID (assimilated) or &quot;insight-N&quot; (raw user_insight)
+  → action: &quot;delete&quot; (soft) or &quot;modify&quot; (content update)
+</code></pre>
+<p><strong>Cascade behavior for raw deletes:</strong></p>
+<ul>
+<li>Soft-deletes the raw row</li>
+<li>Finds all assimilated records containing the raw ID in <code>source_ids</code></li>
+<li>Single-source assimilated record → auto soft-deleted</li>
+<li>Multi-source assimilated record → returned as <code>assimilated_needs_review</code> for agent to edit</li>
+</ul>
+<p><strong>Source:</strong> <a href="https://github.com/neubirdai/ace/blob/main/tools/update_memory/mcp_tool_update_memory.go"><code>ace/tools/update_memory/mcp_tool_update_memory.go</code></a></p>
+<hr />
+<h3 id="list_unassimilated_learnings"><code>list_unassimilated_learnings</code></h3>
+<p>Discovery tool for the MemoryAssimilator agent. Returns up to 50 rows per type from the last 10 days where <code>assimilated_at IS NULL</code>, filtered by <code>project_uuid</code>. Covers all four raw tables in a single call:</p>
+<pre><code class="language-text">{
+  &quot;sql_learnings&quot;:   [...],
+  &quot;table_learnings&quot;: [...],
+  &quot;user_insights&quot;:   [...],
+  &quot;tool_learnings&quot;:  [...]
+}
+</code></pre>
+<p><strong>Restricted:</strong> agent-only (not exposed to user-facing agents).</p>
+<p><strong>Source:</strong> <a href="https://github.com/neubirdai/ace/blob/main/tools/list_unassimilated_learnings/mcp_tool_list_unassimilated.go"><code>ace/tools/list_unassimilated_learnings/mcp_tool_list_unassimilated.go</code></a></p>
+<hr />
+<h3 id="describe_table"><code>describe_table</code></h3>
+<p>Returns schema information for a table. Now also injects SQL hints from <code>assimilated_learnings</code> into its response (<code>Hints []string</code> field), surfacing relevant memory directly at query-planning time without a separate <code>load_relevant_learnings</code> call.</p>
+<hr />
+<h3 id="update_learning_assimilation"><code>update_learning_assimilation</code></h3>
+<p>Writes an assimilation result: creates or merges into <code>assimilated_learnings</code>, then marks the raw row as processed.</p>
+<pre><code class="language-text">update_learning_assimilation(table, id, learning, summary, confidence, ...)
+  → inserts new assimilated record OR merges into existing (append source_id)
+  → sets assimilated_at = now() on the raw row
+  → generates 512-dim embedding for table/user_insight types
+</code></pre>
+<p><strong>Restricted:</strong> MemoryAssimilator agent only.</p>
+<p><strong>Source:</strong> <a href="https://github.com/neubirdai/ace/blob/main/tools/update_learning_assimilation/mcp_tool_update_assimilation.go"><code>ace/tools/update_learning_assimilation/mcp_tool_update_assimilation.go</code></a></p>
+<hr />
+<h2 id="agents">Agents</h2>
+<h3 id="memoryassimilator">MemoryAssimilator</h3>
+<p><strong>Location:</strong> <a href="https://github.com/neubirdai/falcon/blob/main/agents/MemoryAssimilator.md"><code>agents/MemoryAssimilator.md</code></a></p>
+<p>A background-only agent (not user-invocable) that consolidates raw learnings into the assimilated store.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model</td>
+<td><code>claude-haiku-4-5</code> (cost-capped at $8/run)</td>
+</tr>
+<tr>
+<td>Timeout</td>
+<td>15 minutes</td>
+</tr>
+<tr>
+<td>Schedule</td>
+<td>Every 6 hours per project (cron: <code>0 */6 * * *</code>)</td>
+</tr>
+<tr>
+<td>User invocable</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Session footprint</td>
+<td>None (<code>skip_save_session: true</code>)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Tools available:</strong> <code>list_unassimilated_learnings</code>, <code>update_learning_assimilation</code>, <code>load_relevant_learnings</code>, <code>update_memory</code>, <code>get_skill</code>, <code>get_prompt</code></p>
+<p><strong>Skills loaded per type:</strong> <code>memory-sql-learnings</code>, <code>memory-table-learnings</code>, <code>memory-user-insights</code>, <code>memory-forget-requests</code>, <code>memory-tool-learnings</code></p>
+<p><strong>Pre-execution hook:</strong> Before the agent runs, <code>CheckNeedsLearning</code> calls <code>list_unassimilated_learnings</code> scoped to the project. If no pending rows exist the run is skipped entirely, avoiding unnecessary Haiku calls.</p>
+<hr />
+<h3 id="execlearningsagent">ExecLearningsAgent</h3>
+<p><strong>Location:</strong> <a href="https://github.com/neubirdai/falcon/blob/main/agents/ExecLearningsAgent.md"><code>agents/ExecLearningsAgent.md</code></a></p>
+<p>The user-facing agent behind the Falcon Learnings tab. Reads and writes memory as part of investigation workflows.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model</td>
+<td><code>claude-sonnet-4-6</code></td>
+</tr>
+<tr>
+<td>User invocable</td>
+<td>Yes (Falcon Learnings tab)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Memory workflow:</strong></p>
+<ol>
+<li>Calls <code>load_relevant_learnings</code> for each type at the start of an investigation</li>
+<li>Searches past investigation history via <code>search_prompts</code></li>
+<li>Detects gaps: investigations with no <code>save_learnings</code> call = unresolved knowledge</li>
+<li>Saves new learnings inline via <code>save_learnings</code></li>
+<li>On user correction: <code>load_relevant_learnings</code> → <code>update_memory</code> (delete) → <code>save_learnings</code> (new)</li>
+</ol>
+<hr />
+<h2 id="assimilation-per-type-logic">Assimilation: Per-Type Logic</h2>
+<p>The MemoryAssimilator orchestrates five steps (defined in <a href="https://github.com/neubirdai/falcon/blob/main/agents/MemoryAssimilator/SOUL.md"><code>agents/MemoryAssimilator/SOUL.md</code></a>):</p>
+<ol>
+<li>Call <code>list_unassimilated_learnings</code> to discover all pending rows for the project</li>
+<li>Call <code>get_skill()</code> for each type present to load its assimilation rules</li>
+<li>Process each batch using the loaded skills</li>
+<li>Handle any <code>[FORGET]</code> rows via the <code>memory-forget-requests</code> skill</li>
+<li>Report total rows assimilated and forget requests processed</li>
+</ol>
+<p><strong>Critical rule across all types:</strong> always pass <code>include_raw=true</code> when calling <code>load_relevant_learnings</code> during assimilation, so raw rows from the current batch are visible for deduplication before they are written.</p>
+<hr />
+<h3 id="sql-learnings-memory-sql-learnings">SQL Learnings (<code>memory-sql-learnings</code>)</h3>
+<p><strong>Skill:</strong> <a href="https://github.com/neubirdai/falcon/blob/main/skills/memory-sql-learnings/SKILL.md"><code>skills/memory-sql-learnings/SKILL.md</code></a></p>
+<p>SQL learnings are <strong>upserted</strong> — one active assimilated record exists per <code>schema_table_type</code>. Subsequent raw rows update that record rather than creating duplicates.</p>
+<p><strong>For each raw <code>sql_learnings</code> row:</strong></p>
+<ol>
+<li>Call <code>update_learning_assimilation</code> with:</li>
+<li><code>table="sql_learnings"</code>, the row ID, generalized learning, summary, confidence, <code>schema_table_type</code></li>
+<li>This upserts by <code>schema_table_type</code>, updating the existing record if one exists</li>
+</ol>
+<p>SQL hints are served directly via <code>describe_table</code>, which queries <code>assimilated_learnings</code> and injects relevant hints into its response. There is no separate table-comment update step.</p>
+<p><strong>Confidence bands:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Range</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&gt; 0.8</td>
+<td>Generic rules applicable across many environments</td>
+</tr>
+<tr>
+<td>0.5 – 0.8</td>
+<td>Patterns applicable to recognizable situations</td>
+</tr>
+<tr>
+<td>&lt; 0.5</td>
+<td>Narrow, investigation-specific facts</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="table-learnings-memory-table-learnings">Table Learnings (<code>memory-table-learnings</code>)</h3>
+<p><strong>Skill:</strong> <a href="https://github.com/neubirdai/falcon/blob/main/skills/memory-table-learnings/SKILL.md"><code>skills/memory-table-learnings/SKILL.md</code></a></p>
+<p>Table learnings accumulate over time and are <strong>merged</strong> when a new row is semantically identical or very similar to an existing one.</p>
+<p><strong>For each raw <code>table_learnings</code> row:</strong></p>
+<ol>
+<li><strong>Validate against investigation context</strong> (if <code>prompt_id</code> present):</li>
+<li>Call <code>get_prompt()</code> to retrieve the investigation</li>
+<li>Cross-reference tool calls and <code>final_answer</code> to validate which candidate tables actually had evidence</li>
+<li>Update the <code>tables</code> field to only include validated tables</li>
+<li>If <code>get_prompt</code> fails → treat as no context, proceed with confidence 0.5</li>
+<li>
+<p>If investigation status is not COMPLETED or confidence &lt; 0.5 → mark inconclusive (confidence 0.1)</p>
+</li>
+<li>
+<p><strong>Deduplicate</strong> via <code>load_relevant_learnings(type="table", include_raw=true)</code>:</p>
+</li>
+<li><strong>Identical</strong> → merge with <code>merge_into_id=&lt;existing_id&gt;</code> (no new record)</li>
+<li><strong>Same insight, slight variation</strong> → merge with updated learning capturing both cases; increase confidence by ≤ 0.1</li>
+<li><strong>Multiple near-duplicates</strong> → delete all but the highest-confidence record, merge into the survivor</li>
+<li>
+<p><strong>Different insight</strong> → proceed to step 3</p>
+</li>
+<li>
+<p><strong>Insert as new</strong> via <code>update_learning_assimilation</code> with table_learnings data</p>
+</li>
+</ol>
+<hr />
+<h3 id="user-insights-memory-user-insights">User Insights (<code>memory-user-insights</code>)</h3>
+<p><strong>Skill:</strong> <a href="https://github.com/neubirdai/falcon/blob/main/skills/memory-user-insights/SKILL.md"><code>skills/memory-user-insights/SKILL.md</code></a></p>
+<p>User insights are <strong>merged or inserted</strong> based on semantic similarity. The <code>trigger</code> field controls whether a preference is always returned or only returned on semantic match.</p>
+<p><strong>For each raw <code>user_insights</code> row</strong> (excluding <code>[FORGET]</code> rows):</p>
+<ol>
+<li><strong>Deduplicate</strong> via <code>load_relevant_learnings(type="user_insight", include_raw=true)</code>:</li>
+<li><strong>Identical</strong> → merge with <code>merge_into_id=&lt;existing_id&gt;</code> (no new record)</li>
+<li><strong>Same belief, updated</strong> → call <code>update_memory(action="modify")</code> on the existing record, then merge the raw row via <code>merge_into_id</code></li>
+<li><strong>Multiple near-duplicates</strong> → delete all but highest-confidence survivor, then modify + merge into it</li>
+<li>
+<p><strong>Different insight</strong> → proceed to step 2</p>
+</li>
+<li>
+<p><strong>Insert as new</strong> via <code>update_learning_assimilation</code> with:</p>
+</li>
+<li><code>trigger="always"</code> only for <code>insight_type="preference"</code> (e.g. "always show p99 latency") — these are returned on every query regardless of search relevance</li>
+<li><code>trigger</code> unset for <code>knowledge</code>, <code>correction</code>, <code>pattern</code> — returned only by semantic similarity</li>
+</ol>
+<hr />
+<h3 id="forget-requests-memory-forget-requests">Forget Requests (<code>memory-forget-requests</code>)</h3>
+<p><strong>Skill:</strong> <a href="https://github.com/neubirdai/falcon/blob/main/skills/memory-forget-requests/SKILL.md"><code>skills/memory-forget-requests/SKILL.md</code></a></p>
+<p>Any <code>user_insights</code> row whose content starts with <code>[FORGET]</code> is treated as an erasure request rather than a new learning.</p>
+<p><strong>For each <code>[FORGET]</code> row:</strong></p>
+<ol>
+<li>Extract the subject from the content after the <code>[FORGET]</code> prefix</li>
+<li>Call <code>load_relevant_learnings(type="user_insight", query=&lt;subject&gt;)</code> to find matching records</li>
+<li>For each match, call <code>update_memory(action="delete", id=&lt;id&gt;)</code> to soft-delete it</li>
+<li>If no match found, no action needed — the raw row was never assimilated</li>
+</ol>
+<hr />
+<h3 id="tool-learnings-memory-tool-learnings">Tool Learnings (<code>memory-tool-learnings</code>)</h3>
+<p><strong>Skill:</strong> <a href="https://github.com/neubirdai/falcon/blob/main/skills/memory-tool-learnings/SKILL.md"><code>skills/memory-tool-learnings/SKILL.md</code></a></p>
+<p>Tool learnings are <strong>upserted</strong> — one active assimilated record exists per <code>tool_name</code>. Subsequent raw rows update that record rather than creating duplicates.</p>
+<p><strong>For each batch of raw <code>tool_learnings</code> rows:</strong></p>
+<ol>
+<li>Group by <code>tool_name</code></li>
+<li>Compile a concise hint block noting bad patterns, correct forms, and frequency</li>
+<li>Call <code>update_learning_assimilation</code> with <code>table="tool_learnings"</code>, row ID, compiled learning, summary, confidence, <code>tool_name</code></li>
+</ol>
+<hr />
+<h2 id="full-data-flow">Full Data Flow</h2>
+<pre><code class="language-text">Investigation (ExecLearningsAgent / Analyst)
+  │
+  ├── load_relevant_learnings(query, project_uuid)
+  │     └── hybrid search on assimilated_learnings WHERE project_uuid = ?
+  │           → returns ranked context for agent
+  │
+  ├── agent reasons, executes SQL, presents findings
+  │
+  └── save_learnings(type, content, project_uuid, ...)
+        └── writes to raw table with project_uuid (assimilated_at = NULL)
+
+                         ↓  (every 6 hours, per project)
+
+Memory Assimilation (MemoryAssimilator)
+  │
+  ├── [pre-hook] CheckNeedsLearning(project_uuid)
+  │     └── aborts if no pending rows for this project
+  │
+  ├── list_unassimilated_learnings(project_uuid)
+  │     └── up to 50 rows per type, last 10 days
+  │
+  ├── get_skill for each type present
+  │
+  ├── SQL learnings:
+  │     └── upsert by schema_table_type into assimilated_learnings
+  │
+  ├── Table learnings:
+  │     ├── validate against investigation context (get_prompt)
+  │     ├── deduplicate via load_relevant_learnings (include_raw=true)
+  │     └── insert new or merge into existing
+  │
+  ├── User insights:
+  │     ├── deduplicate via load_relevant_learnings (include_raw=true)
+  │     ├── set trigger=&quot;always&quot; for preferences only
+  │     └── insert new or merge/modify existing
+  │
+  ├── Tool learnings:
+  │     └── upsert by tool_name into assimilated_learnings
+  │
+  └── [FORGET] rows:
+        ├── find matching assimilated records
+        └── soft-delete each match
+
+                         ↓
+
+Next investigation:
+  ├── describe_table(table) → hints from assimilated_learnings injected into response
+  ├── tool descriptions loaded → hints from assimilated_learnings appended to description
+  └── load_relevant_learnings(type=&quot;tool&quot;) → tool hints injected into ## Tool usage rules section
+</code></pre>
+<hr />
+<h2 id="learning-queue">Learning Queue</h2>
+<p><strong>Location:</strong> <a href="https://github.com/neubirdai/falcon/blob/main/internal/ai/learning_queue.go"><code>internal/ai/learning_queue.go</code></a></p>
+<p>A background worker pool (2 goroutines) that persists learnings from Falcon agents to ACE asynchronously. Each job carries a <code>project_uuid</code> because background sessions are not connected to a database session.</p>
+<hr />
+<h2 id="key-design-decisions">Key Design Decisions</h2>
+<p><strong>Strict project isolation</strong> — All queries use <code>project_uuid = $N</code> with no cross-project fallback. Removed in <a href="https://github.com/neubirdai/ace/pull/276">#276</a> was the <code>IN ($projectUUID, '')</code> pattern that had allowed org-wide system records.</p>
+<p><strong>Soft deletes everywhere</strong> — <code>deleted_at</code> timestamps preserve audit history and allow undo. Queries always filter <code>WHERE deleted_at IS NULL</code>.</p>
+<p><strong>Two-phase architecture</strong> — Raw capture is non-blocking; expensive operations (embedding generation, deduplication, merging) happen asynchronously in the background job.</p>
+<p><strong>Assimilation idempotence</strong> — SQL learnings upsert by <code>schema_table_type</code> (one record per table). <code>assimilated_at</code> prevents the same raw row from being processed twice.</p>
+<p><strong>Hybrid search with graceful degradation</strong> — Vector + text search combined via RRF for table and user insight types. Falls back to keyword-only search if the embedder is unavailable.</p>
+<p><strong>Multi-source merge tracking</strong> — <code>source_ids TEXT[]</code> links each assimilated record back to its raw sources, enabling safe cascade deletes and transparent lineage.</p>
+<p><strong>Always-trigger preferences</strong> — User insights of subtype <code>preference</code> are tagged <code>trigger="always"</code> so they are returned on every <code>load_relevant_learnings</code> call, regardless of semantic similarity. Other subtypes are returned only when the query matches.</p>
+<hr />
+<h2 id="key-files">Key Files</h2>
+<h3 id="ace-go-backend">ACE (Go backend)</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/neubirdai/ace/blob/main/store/migrations/000013_memory_schema.up.sql"><code>ace/store/migrations/000013_memory_schema.up.sql</code></a></td>
+<td>Initial schema: raw tables + assimilated_learnings</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/ace/blob/main/store/migrations/20260521000001_learnings_project_uuid.up.sql"><code>ace/store/migrations/20260521000001_learnings_project_uuid.up.sql</code></a></td>
+<td>Adds <code>project_uuid</code> to raw tables + partial indexes</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/ace/blob/main/store/migrations/20260526000001_assimilated_learnings_tool_type.up.sql"><code>ace/store/migrations/20260526000001_assimilated_learnings_tool_type.up.sql</code></a></td>
+<td>Adds <code>tool_name</code> column, extends type CHECK</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/ace/blob/main/store/migrations/20260526000002_create_tool_learnings.up.sql"><code>ace/store/migrations/20260526000002_create_tool_learnings.up.sql</code></a></td>
+<td>Creates <code>ace.tool_learnings</code> table</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/ace/blob/main/store/assimilated_learnings.go"><code>ace/store/assimilated_learnings.go</code></a></td>
+<td>AssimilatedLearning struct + store interface</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/ace/blob/main/store/pg_assimilated_learnings.go"><code>ace/store/pg_assimilated_learnings.go</code></a></td>
+<td>PostgreSQL implementation (hybrid search, upsert, merge)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/ace/blob/main/store/pg_sql_learnings.go"><code>ace/store/pg_sql_learnings.go</code></a></td>
+<td>SQL learnings store (project-scoped)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/ace/blob/main/store/pg_table_learnings.go"><code>ace/store/pg_table_learnings.go</code></a></td>
+<td>Table learnings store (project-scoped)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/ace/blob/main/store/pg_user_insights.go"><code>ace/store/pg_user_insights.go</code></a></td>
+<td>User insights store (project-scoped)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/ace/blob/main/store/tool_learnings.go"><code>ace/store/tool_learnings.go</code></a></td>
+<td>ToolLearning struct + ToolLearningsStore interface</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/ace/blob/main/store/pg_tool_learnings.go"><code>ace/store/pg_tool_learnings.go</code></a></td>
+<td>PG implementation</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/ace/blob/main/tools/save_memory/mcp_tool_save_memory.go"><code>ace/tools/save_memory/mcp_tool_save_memory.go</code></a></td>
+<td><code>save_learnings</code> MCP tool</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/ace/blob/main/tools/load_relevant/mcp_tool_load_relevant.go"><code>ace/tools/load_relevant/mcp_tool_load_relevant.go</code></a></td>
+<td><code>load_relevant_learnings</code> MCP tool</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/ace/blob/main/tools/update_memory/mcp_tool_update_memory.go"><code>ace/tools/update_memory/mcp_tool_update_memory.go</code></a></td>
+<td><code>update_memory</code> MCP tool</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/ace/blob/main/tools/list_unassimilated_learnings/mcp_tool_list_unassimilated.go"><code>ace/tools/list_unassimilated_learnings/mcp_tool_list_unassimilated.go</code></a></td>
+<td><code>list_unassimilated_learnings</code> MCP tool</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/ace/blob/main/tools/update_learning_assimilation/mcp_tool_update_assimilation.go"><code>ace/tools/update_learning_assimilation/mcp_tool_update_assimilation.go</code></a></td>
+<td><code>update_learning_assimilation</code> MCP tool</td>
+</tr>
+</tbody>
+</table>
+<h3 id="desktop-falcon-go-server-agents">Desktop / Falcon (Go server + agents)</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/neubirdai/falcon/blob/main/agents/MemoryAssimilator.md"><code>agents/MemoryAssimilator.md</code></a></td>
+<td>MemoryAssimilator agent definition</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/falcon/blob/main/agents/MemoryAssimilator/SOUL.md"><code>agents/MemoryAssimilator/SOUL.md</code></a></td>
+<td>5-step assimilation orchestration</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/falcon/blob/main/agents/ExecLearningsAgent.md"><code>agents/ExecLearningsAgent.md</code></a></td>
+<td>ExecLearningsAgent definition (Learnings tab)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/falcon/blob/main/skills/memory-sql-learnings/SKILL.md"><code>skills/memory-sql-learnings/SKILL.md</code></a></td>
+<td>SQL assimilation rules</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/falcon/blob/main/skills/memory-table-learnings/SKILL.md"><code>skills/memory-table-learnings/SKILL.md</code></a></td>
+<td>Table assimilation rules</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/falcon/blob/main/skills/memory-user-insights/SKILL.md"><code>skills/memory-user-insights/SKILL.md</code></a></td>
+<td>User insight assimilation rules</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/falcon/blob/main/skills/memory-forget-requests/SKILL.md"><code>skills/memory-forget-requests/SKILL.md</code></a></td>
+<td>Forget request handling</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/falcon/blob/main/skills/memory-tool-learnings/SKILL.md"><code>skills/memory-tool-learnings/SKILL.md</code></a></td>
+<td>Tool learning assimilation rules</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/falcon/blob/main/internal/ai/learning_queue.go"><code>internal/ai/learning_queue.go</code></a></td>
+<td>Background learning persistence queue</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/falcon/blob/main/internal/jobrunner/hooks_memory.go"><code>internal/jobrunner/hooks_memory.go</code></a></td>
+<td>Pre-execution hook (skip if no pending learnings)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/neubirdai/incident-ai/blob/main/manager/tasks.go"><code>../incident-ai/manager/tasks.go</code></a></td>
+<td>Scheduled task definition (6h cron per project)</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
