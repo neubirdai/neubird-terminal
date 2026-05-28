@@ -1024,6 +1024,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#system-prompts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System prompts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#registry-safety" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1365,7 +1376,7 @@
 <hr />
 <h2 id="main-entities">Main Entities</h2>
 <h3 id="agentdefinition">AgentDefinition</h3>
-<p>Declared in <code>internal/agents/agents.go</code>. Describes a named AI persona with its model and capability constraints.</p>
+<p>Declared in <code>internal/agents/agents.go</code>. Describes a named agent with its model and capability constraints.</p>
 <pre><code class="language-go">type AgentDefinition struct {
     Name             string        // &quot;Responder&quot; | &quot;Analyst&quot; | &quot;Architect&quot;
     PersonaName      string        // optional human name for the persona
@@ -1397,23 +1408,30 @@
 <td>Responder</td>
 <td>Haiku</td>
 <td>3/1</td>
-<td>Fast triage, bullet-point answers</td>
+<td>Fast triage; own prompt in <code>agents/Responder/</code></td>
 </tr>
 <tr>
 <td>Analyst</td>
 <td>Sonnet</td>
 <td>2/2</td>
-<td>Methodical RCA, shows reasoning</td>
+<td>Default deep investigation; base prompt in <code>Analyst.md</code></td>
 </tr>
 <tr>
 <td>Architect</td>
 <td>Opus</td>
 <td>1/3</td>
-<td>Runbooks, design docs, long-horizon</td>
+<td>Runbooks, design docs; <code>Analyst.md</code> base + registry persona</td>
 </tr>
 </tbody>
 </table>
 <p>Custom agents are loaded from <code>.md</code> files (YAML frontmatter + persona body) in <code>agents/</code> or <code>~/.config/neubird/agents/</code>.</p>
+<h4 id="system-prompts">System prompts</h4>
+<ul>
+<li><strong>Analyst</strong> (default) — <code>Analyst.md</code> (embedded; overridable via <code>HAWKEYE_PROMPT</code> / disk) plus registry persona. No <code>agents/Analyst/</code> directory.</li>
+<li><strong>Architect</strong> — Registry persona on the <code>Analyst.md</code> investigation base. No <code>agents/Architect/</code> directory.</li>
+<li><strong>Responder</strong> — Full prompt from <code>agents/Responder/</code> only; <code>Analyst.md</code> is not included.</li>
+</ul>
+<p>The runtime rule that produces this: if an agent has an <code>agents/&lt;Name&gt;/</code> directory, the assembled fragment files become the <em>full</em> base prompt and <code>Analyst.md</code> is not loaded; otherwise the registry persona is layered on top of <code>Analyst.md</code>.</p>
 <h4 id="registry-safety">Registry safety</h4>
 <p>The <code>agents.All</code> slice is protected by <code>allMu sync.RWMutex</code>. The public API provides two safe accessors:</p>
 <ul>
@@ -1877,7 +1895,7 @@ set <code>def.Timeout</code> rather than wrapping the context in <code>WithTimeo
   │         → lazySection (re-evaluates skills on each Build() call)
   │       Else:
   │         → reuse a.skillsSection (shared MutableSection)
-  │       Combined with: persona + base prompt + DateSection + schema +
+  │       Combined with: agent base prompt (+ persona for Analyst) + DateSection + schema +
   │                      table learnings + extra sections + insights
   │
   ├─ 3. Resolve allowed tools
@@ -1927,7 +1945,7 @@ Close()
 │  TUI / HTTP  │ ──────────► │         agent.Execute()           │
 └──────────────┘             │                                   │
                              │  Build system prompt              │
-                             │  ├─ persona + base prompt         │
+                             │  ├─ agent base prompt             │
                              │  ├─ DB schema                     │
                              │  └─ skills (lazySection)          │
                              │                                   │
