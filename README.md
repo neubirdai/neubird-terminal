@@ -1,6 +1,6 @@
 <div align="center">
   <img src="docs/assets/logo-color.svg" alt="NeuBird" style="height: 80px; width: auto; max-width: 400px;" />
-  <h1>NeuBird Desktop</h1>
+  <h1>NeuBird Terminal</h1>
   <p><strong>The Production Ops Agent in your terminal.</strong></p>
   <p>
     NeuBird connects to your telemetry databases and investigates incidents, health, cost, and performance — using natural language.
@@ -145,36 +145,36 @@ Use `/sentinel off` to stop. The sentinel runs in the background — you can inv
 ### macOS / Linux (Homebrew)
 
 ```bash
-brew install neubirdai/tap/neubird
+brew install neubirdai/tap/neubird-terminal
 ```
 
 ### Linux (Snap)
 
 ```bash
-sudo snap install neubird-desktop
+sudo snap install neubird-terminal
 ```
 
 ### Linux (Debian / Ubuntu)
 
 ```bash
-curl -LO https://github.com/neubirdai/neubird-desktop/releases/latest/download/neubird_linux_amd64.deb
+curl -LO https://github.com/neubirdai/neubird-terminal/releases/latest/download/neubird_linux_amd64.deb
 sudo dpkg -i neubird_linux_amd64.deb
 ```
 
 ### Linux (Fedora / RHEL)
 
 ```bash
-curl -LO https://github.com/neubirdai/neubird-desktop/releases/latest/download/neubird_linux_amd64.rpm
+curl -LO https://github.com/neubirdai/neubird-terminal/releases/latest/download/neubird_linux_amd64.rpm
 sudo rpm -i neubird_linux_amd64.rpm
 ```
 
 ### Windows
 
-Download `neubird_windows_amd64.zip` from the [latest release](https://github.com/neubirdai/neubird-desktop/releases/latest), extract it, and add the folder to your `PATH`:
+Download `neubird_windows_amd64.zip` from the [latest release](https://github.com/neubirdai/neubird-terminal/releases/latest), extract it, and add the folder to your `PATH`:
 
 ```powershell
 # PowerShell — download and extract
-Invoke-WebRequest -Uri "https://github.com/neubirdai/neubird-desktop/releases/latest/download/neubird_windows_amd64.zip" -OutFile neubird.zip
+Invoke-WebRequest -Uri "https://github.com/neubirdai/neubird-terminal/releases/latest/download/neubird_windows_amd64.zip" -OutFile neubird.zip
 Expand-Archive neubird.zip -DestinationPath "$env:LOCALAPPDATA\neubird"
 
 # Add to PATH (current session)
@@ -187,7 +187,7 @@ $env:PATH += ";$env:LOCALAPPDATA\neubird"
 ### Docker
 
 ```bash
-docker run -it --rm neubirdai/neubird-desktop:latest
+docker run -it --rm neubirdai/neubird-terminal:latest
 ```
 
 ### Verify installation
@@ -342,7 +342,7 @@ The `/v1/infer` endpoint streams Server-Sent Events. Each event is a JSON object
 
 ## Documentation
 
-Full documentation is available at [neubirdai.github.io/neubird-desktop](https://neubirdai.github.io/neubird-desktop/).
+Full documentation is available at [neubirdai.github.io/neubird-terminal](https://neubirdai.github.io/neubird-terminal/).
 
 ## License
 
