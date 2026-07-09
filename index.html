@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://neubirdai.github.io/neubird-desktop/">
+        <link rel="canonical" href="https://neubirdai.github.io/neubird-terminal/">
       
       
       
@@ -25,7 +25,7 @@
     
     
       
-        <title>NeuBird Desktop</title>
+        <title>NeuBird Terminal</title>
       
     
     
@@ -102,7 +102,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="NeuBird Desktop" class="md-header__button md-logo" aria-label="NeuBird Desktop" data-md-component="logo">
+    <a href="." title="NeuBird Terminal" class="md-header__button md-logo" aria-label="NeuBird Terminal" data-md-component="logo">
       
   <img src="assets/icon.svg" alt="logo">
 
@@ -115,7 +115,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            NeuBird Desktop
+            NeuBird Terminal
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -331,12 +331,12 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="NeuBird Desktop" class="md-nav__button md-logo" aria-label="NeuBird Desktop" data-md-component="logo">
+    <a href="." title="NeuBird Terminal" class="md-nav__button md-logo" aria-label="NeuBird Terminal" data-md-component="logo">
       
   <img src="assets/icon.svg" alt="logo">
 
     </a>
-    NeuBird Desktop
+    NeuBird Terminal
   </label>
   
     <div class="md-nav__source">
@@ -1693,7 +1693,7 @@
 
 <div align="center">
   <img src="assets/logo-color.svg" alt="NeuBird" style="height: 80px; width: auto; max-width: 400px;" />
-  <h1>NeuBird Desktop</h1>
+  <h1>NeuBird Terminal</h1>
   <p><strong>The Production Ops Agent in your terminal.</strong></p>
   <p>
     NeuBird connects to your telemetry databases and investigates incidents, health, cost, and performance — using natural language.
@@ -1754,7 +1754,6 @@
 <pre><code>🔧 Tool inventory (18 tools)
   📦 Built-in (12)
      ✓ exec_sql                  Execute SQL queries against the database
-     ✓ list_schemas              List database schemas
      ...
   ☁️  ACE MCP (4)
      ✓ external_tool             External service queries
@@ -1861,23 +1860,23 @@
 <p><strong>MCP tool support</strong> — Extend NeuBird with Model Context Protocol servers for additional data sources and capabilities beyond SQL.</p>
 <h2 id="installation">Installation</h2>
 <h3 id="macos-linux-homebrew">macOS / Linux (Homebrew)</h3>
-<pre><code class="language-bash">brew install neubirdai/tap/neubird
+<pre><code class="language-bash">brew install neubirdai/tap/neubird-terminal
 </code></pre>
 <h3 id="linux-snap">Linux (Snap)</h3>
-<pre><code class="language-bash">sudo snap install neubird-desktop
+<pre><code class="language-bash">sudo snap install neubird-terminal
 </code></pre>
 <h3 id="linux-debian-ubuntu">Linux (Debian / Ubuntu)</h3>
-<pre><code class="language-bash">curl -LO https://github.com/neubirdai/neubird-desktop/releases/latest/download/neubird_linux_amd64.deb
+<pre><code class="language-bash">curl -LO https://github.com/neubirdai/neubird-terminal/releases/latest/download/neubird_linux_amd64.deb
 sudo dpkg -i neubird_linux_amd64.deb
 </code></pre>
 <h3 id="linux-fedora-rhel">Linux (Fedora / RHEL)</h3>
-<pre><code class="language-bash">curl -LO https://github.com/neubirdai/neubird-desktop/releases/latest/download/neubird_linux_amd64.rpm
+<pre><code class="language-bash">curl -LO https://github.com/neubirdai/neubird-terminal/releases/latest/download/neubird_linux_amd64.rpm
 sudo rpm -i neubird_linux_amd64.rpm
 </code></pre>
 <h3 id="windows">Windows</h3>
-<p>Download <code>neubird_windows_amd64.zip</code> from the <a href="https://github.com/neubirdai/neubird-desktop/releases/latest">latest release</a>, extract it, and add the folder to your <code>PATH</code>:</p>
+<p>Download <code>neubird_windows_amd64.zip</code> from the <a href="https://github.com/neubirdai/neubird-terminal/releases/latest">latest release</a>, extract it, and add the folder to your <code>PATH</code>:</p>
 <pre><code class="language-powershell"># PowerShell — download and extract
-Invoke-WebRequest -Uri &quot;https://github.com/neubirdai/neubird-desktop/releases/latest/download/neubird_windows_amd64.zip&quot; -OutFile neubird.zip
+Invoke-WebRequest -Uri &quot;https://github.com/neubirdai/neubird-terminal/releases/latest/download/neubird_windows_amd64.zip&quot; -OutFile neubird.zip
 Expand-Archive neubird.zip -DestinationPath &quot;$env:LOCALAPPDATA\neubird&quot;
 
 # Add to PATH (current session)
@@ -1887,7 +1886,7 @@ $env:PATH += &quot;;$env:LOCALAPPDATA\neubird&quot;
 [Environment]::SetEnvironmentVariable(&quot;PATH&quot;, $env:PATH + &quot;;$env:LOCALAPPDATA\neubird&quot;, &quot;User&quot;)
 </code></pre>
 <h3 id="docker">Docker</h3>
-<pre><code class="language-bash">docker run -it --rm neubirdai/neubird-desktop:latest
+<pre><code class="language-bash">docker run -it --rm neubirdai/neubird-terminal:latest
 </code></pre>
 <h3 id="verify-installation">Verify installation</h3>
 <pre><code class="language-bash">neubird --version
@@ -2332,7 +2331,7 @@ curl -X POST http://localhost:8080/v1/sentinel/stop
 <td><code>rca_saved</code></td>
 <td><code>OnRCASaved</code></td>
 <td>Not wired (TUI reads file paths from text)</td>
-<td>Persists RCA markdown + structured JSON to MongoDB</td>
+<td>Persists RCA markdown + structured JSON to the session store</td>
 <td>Opus synthesis report saved as PDF/markdown</td>
 </tr>
 <tr>
@@ -2511,7 +2510,7 @@ curl -X POST http://localhost:8080/v1/sentinel/stop
 </ul>
 <p>This does not apply to simple questions (&lt; 3 tool calls) where Claude's short answer is appropriate, nor to cases where Claude wrote a substantial response alongside its last tool call.</p>
 <h2 id="documentation">Documentation</h2>
-<p>Full documentation is available at <a href="https://neubirdai.github.io/neubird-desktop/">neubirdai.github.io/neubird-desktop</a>.</p>
+<p>Full documentation is available at <a href="https://neubirdai.github.io/neubird-terminal/">neubirdai.github.io/neubird-terminal</a>.</p>
 <h2 id="license">License</h2>
 <p>Proprietary. Copyright 2024-2026 NeuBird, Inc.</p>
 

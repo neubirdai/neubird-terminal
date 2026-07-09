@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://neubirdai.github.io/neubird-desktop/MEMORY_SYSTEM/">
+        <link rel="canonical" href="https://neubirdai.github.io/neubird-terminal/MEMORY_SYSTEM/">
       
       
       
@@ -23,7 +23,7 @@
     
     
       
-        <title>Memory System — How Falcon Learns and Remembers - NeuBird Desktop</title>
+        <title>Memory System — How Falcon Learns and Remembers - NeuBird Terminal</title>
       
     
     
@@ -100,7 +100,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="NeuBird Desktop" class="md-header__button md-logo" aria-label="NeuBird Desktop" data-md-component="logo">
+    <a href=".." title="NeuBird Terminal" class="md-header__button md-logo" aria-label="NeuBird Terminal" data-md-component="logo">
       
   <img src="../assets/icon.svg" alt="logo">
 
@@ -113,7 +113,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            NeuBird Desktop
+            NeuBird Terminal
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -327,12 +327,12 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="NeuBird Desktop" class="md-nav__button md-logo" aria-label="NeuBird Desktop" data-md-component="logo">
+    <a href=".." title="NeuBird Terminal" class="md-nav__button md-logo" aria-label="NeuBird Terminal" data-md-component="logo">
       
   <img src="../assets/icon.svg" alt="logo">
 
     </a>
-    NeuBird Desktop
+    NeuBird Terminal
   </label>
   
     <div class="md-nav__source">
@@ -1386,8 +1386,8 @@
 <td>"Use <code>deployments</code> + <code>rollbacks</code> for deploy-regression queries"</td>
 </tr>
 <tr>
-<td><strong>user_insight</strong></td>
-<td>User corrections, preferences, patterns, and derived facts</td>
+<td><strong>insight</strong></td>
+<td>User-stated knowledge and agent-derived observations</td>
 <td>"User prefers percentile breakdowns over averages for latency"</td>
 </tr>
 <tr>
@@ -1397,7 +1397,7 @@
 </tr>
 </tbody>
 </table>
-<p>User insights have four subtypes: <code>preference</code>, <code>knowledge</code>, <code>correction</code>, <code>pattern</code>.</p>
+<p>User insights are classified by <code>provenance</code>: <code>explicit</code> (user directly stated) or <code>inferred</code> (agent derived). Explicit insights are always recalled; inferred insights are recalled by semantic similarity only.</p>
 <hr />
 <h2 id="database-schema">Database Schema</h2>
 <p>All memory lives in the <code>ace</code> PostgreSQL schema, backed by the <code>pgvector</code> extension.</p>
@@ -1464,7 +1464,7 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 <tr>
 <td><code>trigger</code></td>
 <td>TEXT</td>
-<td><code>"always"</code> = return on every query (for critical user preferences)</td>
+<td>Deprecated; explicit provenance now controls always-load behavior</td>
 </tr>
 <tr>
 <td><code>schema_table_type</code></td>
@@ -1479,7 +1479,12 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 <tr>
 <td><code>insight_type</code></td>
 <td>TEXT</td>
-<td>Subtype for user insights</td>
+<td>Deprecated; provenance replaces subtypes</td>
+</tr>
+<tr>
+<td><code>provenance</code></td>
+<td>TEXT</td>
+<td><code>"explicit"</code> (user stated) or <code>"inferred"</code> (agent derived)</td>
 </tr>
 <tr>
 <td><code>tool_name</code></td>
@@ -1523,7 +1528,7 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 <pre><code class="language-text">load_relevant_learnings(query, type?, min_score?, include_raw?)
   → hybrid: vector similarity (HNSW) + text search (ts_rank) via RRF
   → fallback: keyword-only if embedding unavailable
-  → returns ranked entries with relevance_score, confidence, source
+  → returns {learnings: [...]} where each entry has score, confidence, similarity, source
 </code></pre>
 <p><strong>Search strategy per type:</strong></p>
 <ul>
@@ -1539,7 +1544,7 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 <h3 id="update_memory"><code>update_memory</code></h3>
 <p>Deletes or modifies an existing memory. Called when a user corrects an agent.</p>
 <pre><code class="language-text">update_memory(id, action)
-  → id: UUID (assimilated) or &quot;insight-N&quot; (raw user_insight)
+  → id: UUID (assimilated) or &quot;insight-N&quot; (raw insight)
   → action: &quot;delete&quot; (soft) or &quot;modify&quot; (content update)
 </code></pre>
 <p><strong>Cascade behavior for raw deletes:</strong></p>
@@ -1571,7 +1576,7 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 <pre><code class="language-text">update_learning_assimilation(table, id, learning, summary, confidence, ...)
   → inserts new assimilated record OR merges into existing (append source_id)
   → sets assimilated_at = now() on the raw row
-  → generates 512-dim embedding for table/user_insight types
+  → generates 512-dim embedding for table/insight types
 </code></pre>
 <p><strong>Restricted:</strong> MemoryAssimilator agent only.</p>
 <p><strong>Source:</strong> <a href="https://github.com/neubirdai/ace/blob/main/tools/update_learning_assimilation/mcp_tool_update_assimilation.go"><code>ace/tools/update_learning_assimilation/mcp_tool_update_assimilation.go</code></a></p>
@@ -1721,7 +1726,7 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 <p>User insights are <strong>merged or inserted</strong> based on semantic similarity. The <code>trigger</code> field controls whether a preference is always returned or only returned on semantic match.</p>
 <p><strong>For each raw <code>user_insights</code> row</strong> (excluding <code>[FORGET]</code> rows):</p>
 <ol>
-<li><strong>Deduplicate</strong> via <code>load_relevant_learnings(type="user_insight", include_raw=true)</code>:</li>
+<li><strong>Deduplicate</strong> via <code>load_relevant_learnings(type="insight", include_raw=true)</code>:</li>
 <li><strong>Identical</strong> → merge with <code>merge_into_id=&lt;existing_id&gt;</code> (no new record)</li>
 <li><strong>Same belief, updated</strong> → call <code>update_memory(action="modify")</code> on the existing record, then merge the raw row via <code>merge_into_id</code></li>
 <li><strong>Multiple near-duplicates</strong> → delete all but highest-confidence survivor, then modify + merge into it</li>
@@ -1729,10 +1734,8 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 <p><strong>Different insight</strong> → proceed to step 2</p>
 </li>
 <li>
-<p><strong>Insert as new</strong> via <code>update_learning_assimilation</code> with:</p>
+<p><strong>Insert as new</strong> via <code>update_learning_assimilation</code>. Provenance is carried forward from the raw row automatically — explicit insights are always recalled, inferred insights by semantic similarity only.</p>
 </li>
-<li><code>trigger="always"</code> only for <code>insight_type="preference"</code> (e.g. "always show p99 latency") — these are returned on every query regardless of search relevance</li>
-<li><code>trigger</code> unset for <code>knowledge</code>, <code>correction</code>, <code>pattern</code> — returned only by semantic similarity</li>
 </ol>
 <hr />
 <h3 id="forget-requests-memory-forget-requests">Forget Requests (<code>memory-forget-requests</code>)</h3>
@@ -1741,7 +1744,7 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 <p><strong>For each <code>[FORGET]</code> row:</strong></p>
 <ol>
 <li>Extract the subject from the content after the <code>[FORGET]</code> prefix</li>
-<li>Call <code>load_relevant_learnings(type="user_insight", query=&lt;subject&gt;)</code> to find matching records</li>
+<li>Call <code>load_relevant_learnings(type="insight", query=&lt;subject&gt;)</code> to find matching records</li>
 <li>For each match, call <code>update_memory(action="delete", id=&lt;id&gt;)</code> to soft-delete it</li>
 <li>If no match found, no action needed — the raw row was never assimilated</li>
 </ol>

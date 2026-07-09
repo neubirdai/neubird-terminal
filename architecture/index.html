@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://neubirdai.github.io/neubird-desktop/architecture/">
+        <link rel="canonical" href="https://neubirdai.github.io/neubird-terminal/architecture/">
       
       
       
@@ -23,7 +23,7 @@
     
     
       
-        <title>Falcon Architecture - NeuBird Desktop</title>
+        <title>Falcon Architecture - NeuBird Terminal</title>
       
     
     
@@ -100,7 +100,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="NeuBird Desktop" class="md-header__button md-logo" aria-label="NeuBird Desktop" data-md-component="logo">
+    <a href=".." title="NeuBird Terminal" class="md-header__button md-logo" aria-label="NeuBird Terminal" data-md-component="logo">
       
   <img src="../assets/icon.svg" alt="logo">
 
@@ -113,7 +113,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            NeuBird Desktop
+            NeuBird Terminal
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -327,12 +327,12 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="NeuBird Desktop" class="md-nav__button md-logo" aria-label="NeuBird Desktop" data-md-component="logo">
+    <a href=".." title="NeuBird Terminal" class="md-nav__button md-logo" aria-label="NeuBird Terminal" data-md-component="logo">
       
   <img src="../assets/icon.svg" alt="logo">
 
     </a>
-    NeuBird Desktop
+    NeuBird Terminal
   </label>
   
     <div class="md-nav__source">
@@ -1414,24 +1414,24 @@
 <td>Analyst</td>
 <td>Sonnet</td>
 <td>2/2</td>
-<td>Default deep investigation; base prompt in <code>Analyst.md</code></td>
+<td>Default deep investigation; base prompt in <code>agents/Analyst.md</code></td>
 </tr>
 <tr>
 <td>Architect</td>
 <td>Opus</td>
 <td>1/3</td>
-<td>Runbooks, design docs; <code>Analyst.md</code> base + registry persona</td>
+<td>Runbooks, design docs; <code>agents/Analyst.md</code> base + registry persona</td>
 </tr>
 </tbody>
 </table>
 <p>Custom agents are loaded from <code>.md</code> files (YAML frontmatter + persona body) in <code>agents/</code> or <code>~/.config/neubird/agents/</code>.</p>
 <h4 id="system-prompts">System prompts</h4>
 <ul>
-<li><strong>Analyst</strong> (default) — <code>Analyst.md</code> (embedded; overridable via <code>HAWKEYE_PROMPT</code> / disk) plus registry persona. No <code>agents/Analyst/</code> directory.</li>
-<li><strong>Architect</strong> — Registry persona on the <code>Analyst.md</code> investigation base. No <code>agents/Architect/</code> directory.</li>
-<li><strong>Responder</strong> — Full prompt from <code>agents/Responder/</code> only; <code>Analyst.md</code> is not included.</li>
+<li><strong>Analyst</strong> (default) — <code>agents/Analyst.md</code> (embedded; overridable via <code>HAWKEYE_PROMPT</code> / disk) plus registry persona. No <code>agents/Analyst/</code> directory.</li>
+<li><strong>Architect</strong> — Registry persona on the <code>agents/Analyst.md</code> investigation base. No <code>agents/Architect/</code> directory.</li>
+<li><strong>Responder</strong> — Full prompt from <code>agents/Responder/</code> only; <code>agents/Analyst.md</code> is not included.</li>
 </ul>
-<p>The runtime rule that produces this: if an agent has an <code>agents/&lt;Name&gt;/</code> directory, the assembled fragment files become the <em>full</em> base prompt and <code>Analyst.md</code> is not loaded; otherwise the registry persona is layered on top of <code>Analyst.md</code>.</p>
+<p>The runtime rule that produces this: if an agent has an <code>agents/&lt;Name&gt;/</code> directory, the assembled fragment files become the <em>full</em> base prompt and <code>agents/Analyst.md</code> is not loaded; otherwise the registry persona is layered on top of <code>agents/Analyst.md</code>.</p>
 <h4 id="registry-safety">Registry safety</h4>
 <p>The <code>agents.All</code> slice is protected by <code>allMu sync.RWMutex</code>. The public API provides two safe accessors:</p>
 <ul>
