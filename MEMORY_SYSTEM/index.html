@@ -1011,6 +1011,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#short-term-vs-long-term-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Short-Term vs Long-Term Memory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-memory-reaches-the-model-falcon-runtime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Memory Reaches the Model (Falcon Runtime)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How Memory Reaches the Model (Falcon Runtime)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stub-override-and-session-scoping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stub override and session scoping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#investigation-time-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Investigation-time flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sharp-edges-falcon-side" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sharp edges (falcon side)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#memory-types" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1365,6 +1426,67 @@
 </ol>
 <p>Memories are scoped strictly to a project, persist across sessions, and are retrieved at investigation time to guide agents toward better answers.</p>
 <hr />
+<h2 id="short-term-vs-long-term-memory">Short-Term vs Long-Term Memory</h2>
+<p>"Memory" spans two very different systems. Short-term memory is falcon's in-context conversation management (covered in depth in <a href="../architecture/#context-management-short-term-memory">architecture.md → Context management</a>); long-term memory is the ACE-backed store this document describes. The seam between them:</p>
+<pre><code class="language-mermaid">flowchart LR
+    subgraph short [&quot;Short-term (falcon process, per session)&quot;]
+        TURN[&quot;Current turn&lt;br/&gt;streamed blocks&quot;]
+        INV[&quot;Current investigation&lt;br/&gt;Session.Messages&lt;br/&gt;(offload + trim per turn)&quot;]
+        PRIOR[&quot;Earlier investigations,&lt;br/&gt;same session&lt;br/&gt;(compressOldHistory summaries)&quot;]
+    end
+    subgraph bridge [&quot;Conversation history (ACE)&quot;]
+        ACEH[&quot;saveACEHistory / LoadACEHistory&lt;br/&gt;injected next session at&lt;br/&gt;tier 1 (full blocks) or 2/3 (compressed)&quot;]
+    end
+    subgraph long [&quot;Long-term knowledge (ACE, this doc)&quot;]
+        RAW[(&quot;Raw tables&lt;br/&gt;sql / table / user_insights / tool&quot;)]
+        ASSIM[(&quot;assimilated_learnings&lt;br/&gt;pgvector, per-project&quot;)]
+    end
+
+    TURN --&gt; INV --&gt; PRIOR
+    INV --&gt;|&quot;end of run&quot;| ACEH
+    INV --&gt;|&quot;save_learnings during run&quot;| RAW
+    RAW --&gt;|&quot;MemoryAssimilator (6h cron)&quot;| ASSIM
+    ASSIM --&gt;|&quot;load_relevant_learnings +&lt;br/&gt;prompt sections&quot;| INV
+    ACEH --&gt;|&quot;next session&quot;| INV
+</code></pre>
+<p>Conversation history answers "what did we say/do before"; the learnings store answers "what do we <em>know</em>" — deduplicated, embedded, and searchable independent of any conversation.</p>
+<hr />
+<h2 id="how-memory-reaches-the-model-falcon-runtime">How Memory Reaches the Model (Falcon Runtime)</h2>
+<p>The ACE tools above are only half the story. The falcon side (<code>internal/ai/agent.go</code>) decides when memory is fetched, where it lands, and which agents see which parts.</p>
+<h3 id="stub-override-and-session-scoping">Stub override and session scoping</h3>
+<p>Falcon ships built-in <strong>stubs</strong> for <code>save_learnings</code>, <code>load_relevant_learnings</code>, and <code>update_memory</code> (<code>tools.go</code>). At <code>NewAgent</code>, these names are deliberately excluded from the duplicate-suppression map so ACE's <code>tools/list</code> <strong>overrides</strong> them — the wire schema and behavior are ACE's, while the stub definitions remain the offline fallback. Get-all tools (<code>user_insights</code>, <code>table_learnings</code>, <code>sql_learnings</code>) arrive <code>HiddenFromLLM</code>: registered with a session, callable by falcon code, never shown to the model.</p>
+<p>Each prompt opens its own ACE session and closes it on release (<code>mcp_pool.go</code>, <code>agent.go</code>), scoped by <code>connect_database({database: projectUUID})</code> — project identity is session state, never a tool parameter. The learning queue is the exception: it keeps its own long-lived background session per project (<code>learning_queue.go</code>) so its writes never compete with the prompt's.</p>
+<h3 id="investigation-time-flow">Investigation-time flow</h3>
+<pre><code class="language-mermaid">flowchart TD
+    EX[&quot;Execute(prompt)&quot;] --&gt; PRE[&quot;ensureMemoryLoaded(prompt) — once per agent&lt;br/&gt;load_relevant_learnings(query=prompt, include_raw=true)&lt;br/&gt;(skipped when cfg.DisableMemory — eval 'memory off' arm)&quot;]
+    PRE --&gt; MERGE[&quot;mergeMemoryResult routes each entry by type&lt;br/&gt;(memorySeenIDs dedups across loads;&lt;br/&gt;deleted ids are pinned so they never re-merge)&quot;]
+    MERGE --&gt;|sql| SQLC[&quot;sqlLearnings cache → SQL-learnings section&quot;]
+    MERGE --&gt;|table| TBLC[&quot;table cache → Table-knowledge section&quot;]
+    MERGE --&gt;|tool| HINT[&quot;tool hints → Tool-hints section&quot;]
+    MERGE --&gt;|&quot;insight (provenance)&quot;| INS[&quot;insights cache → User-insights section&lt;br/&gt;explicit: always rendered&lt;br/&gt;inferred: only with 'inferred_insights' opt-in&quot;]
+    MERGE --&gt;|tribal_knowledge| SKIP[&quot;no local cache — recall-on-demand only&quot;]
+
+    SQLC &amp; TBLC &amp; HINT &amp; INS --&gt; GATE{&quot;AgentDefinition.ContextSections&lt;br/&gt;('context:' frontmatter) opt-in?&quot;}
+    GATE --&gt;|yes| FROZEN[&quot;Sections FROZEN into statics per run&lt;br/&gt;(mid-run saves don't bust the prompt cache)&quot;]
+    GATE --&gt;|no| OMIT[&quot;Section omitted for this agent&quot;]
+    FROZEN --&gt; SYS[&quot;System prompt&lt;br/&gt;(+ promptsections.MemoryTools() guidance&lt;br/&gt;when 'learnings' is enabled)&quot;]
+
+    SYS --&gt; LOOP[&quot;Agent loop&quot;]
+    LOOP --&gt;|&quot;model calls load_relevant_learnings&quot;| L2[&quot;Result returned to model AND&lt;br/&gt;merged into caches (single MCP call)&quot;]
+    LOOP --&gt;|&quot;model calls save_learnings&quot;| SV[&quot;Forwarded to ACE async (rawInput verbatim,&lt;br/&gt;defaults written back) + local caches updated&quot;]
+    LOOP --&gt;|&quot;model calls update_memory&quot;| UM[&quot;Forwarded to ACE;&lt;br/&gt;on delete: id pinned in memorySeenIDs&quot;]
+    LOOP --&gt;|&quot;exec_sql error&quot;| AUTO[&quot;autoSaveColumnLearning / autoSaveGroupByLearning&lt;br/&gt;+ MANDATORY save_learnings nudge appended&lt;br/&gt;to the tool result&quot;]
+    SV --&gt; QUEUE[&quot;learning_queue.go — 2 background workers&lt;br/&gt;persist to ACE with explicit project_uuid&quot;]
+</code></pre>
+<p>Legacy fallbacks: without an ACE <code>save_learnings</code> session, writes route to the older per-type ACE tools via <code>EnqueueLearning</code>, or to the local jsonl stores (<code>internal/learnings</code>, <code>internal/tablelearnings</code>, <code>internal/feedback</code>) — which are <strong>caches/queues, not the source of truth</strong>.</p>
+<h3 id="sharp-edges-falcon-side">Sharp edges (falcon side)</h3>
+<ul>
+<li><code>user_insights</code> get-all emits raw ids as <code>raw-&lt;N&gt;</code>, but <code>update_memory</code> routes raw insight ids as <code>insight-&lt;N&gt;</code> — callers must translate the prefix.</li>
+<li><code>table_learnings</code> get-all returns <strong>no ids</strong>, so its rows are currently untargetable by <code>update_memory</code>'s <code>table-N</code> route.</li>
+<li>Memory tools are excluded from <code>isDataTool</code>, so their output never counts toward data-read metrics (desktop shows <code>DATA 0 B</code> for memory-only runs — by design).</li>
+<li><code>cfg.DisableMemory</code> both strips the memory tools (deny-list) and turns off every memory-derived prompt section, fully isolating the A/B "memory off" arm.</li>
+</ul>
+<hr />
 <h2 id="memory-types">Memory Types</h2>
 <table>
 <thead>
@@ -1395,9 +1517,15 @@
 <td>Syntax error patterns for specific tools</td>
 <td>"Pass <code>tables</code> as an array of strings, not comma-separated"</td>
 </tr>
+<tr>
+<td><strong>tribal_knowledge</strong></td>
+<td>Environment/org facts recalled on demand only</td>
+<td>"The payments team owns the <code>txn_*</code> schemas; page #payments-oncall"</td>
+</tr>
 </tbody>
 </table>
-<p>User insights are classified by <code>provenance</code>: <code>explicit</code> (user directly stated) or <code>inferred</code> (agent derived). Explicit insights are always recalled; inferred insights are recalled by semantic similarity only.</p>
+<p>User insights are classified by <code>provenance</code>: <code>explicit</code> (user directly stated) or <code>inferred</code> (agent derived). Explicit insights are always recalled; inferred insights are recalled by semantic similarity only — and are rendered in the system prompt only for agents that opt into the <code>inferred_insights</code> context section.</p>
+<p><code>tribal_knowledge</code> shares the provenance field (default <code>inferred</code>) but is <strong>never injected into the system prompt</strong> on the falcon side: it is recalled on demand via <code>load_relevant_learnings(type="tribal_knowledge")</code> and has no local cache (see the runtime section below). It is <strong>not a <code>save_learnings</code> type</strong>: the store is written only through the dedicated <code>save_tribal_knowledge</code> tool, an agent-restricted builtin held solely by the Slack/Teams capture listeners; every other agent records team/operational facts as <code>insight</code>. The tool forwards to the ACE <code>save_learnings</code> session with the type injected by the dispatch handler, and has no legacy fallback — without an ACE session the save errors rather than misfiling the fact.</p>
 <hr />
 <h2 id="database-schema">Database Schema</h2>
 <p>All memory lives in the <code>ace</code> PostgreSQL schema, backed by the <code>pgvector</code> extension.</p>
@@ -1621,7 +1749,8 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 <hr />
 <h3 id="execlearningsagent">ExecLearningsAgent</h3>
 <p><strong>Location:</strong> <a href="https://github.com/neubirdai/falcon/blob/main/agents/ExecLearningsAgent.md"><code>agents/ExecLearningsAgent.md</code></a></p>
-<p>The user-facing agent behind the Falcon Learnings tab. Reads and writes memory as part of investigation workflows.</p>
+<p>The user-facing agent behind the Falcon Learnings tab (and the desktop Memory page). It is the memory agent for engineering / IT managers: it reads and writes Falcon's memory and answers at management altitude — what keeps recurring, what was investigated but never resolved, what the team knows and where that knowledge has holes.</p>
+<p><strong>Memory-only, deliberately.</strong> A revision on this branch granted the delivery integrations (Jira, GitHub, Confluence, ServiceNow) via read-verb globs so the agent could cross memory against live delivery data. Testing on the copeyemg tenant showed that grant is not a real boundary and the integrations were pulled back out. See "Why no integrations" below before re-adding them.</p>
 <table>
 <thead>
 <tr>
@@ -1632,14 +1761,37 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 <tbody>
 <tr>
 <td>Model</td>
-<td><code>claude-sonnet-4-6</code></td>
+<td><code>claude-opus-5-5</code></td>
 </tr>
 <tr>
 <td>User invocable</td>
-<td>Yes (Falcon Learnings tab)</td>
+<td>Yes (Falcon Learnings tab / desktop Memory page)</td>
+</tr>
+<tr>
+<td>Tools (exclusive — no <code>*</code>)</td>
+<td><code>load_relevant_learnings</code>, <code>search_prompts</code>, <code>save_learnings</code>, <code>update_memory</code>, <code>list_charts</code>, <code>emit_table</code>, <code>code_exec</code>, <code>get_skill</code></td>
+</tr>
+<tr>
+<td>Skills</td>
+<td>The SOUL is self-contained; <code>get_skill</code> is retained for skills explicitly offered to the agent</td>
+</tr>
+<tr>
+<td>External access</td>
+<td><strong>None.</strong> No integrations, no <code>tool_search</code>, no <code>exec_sql</code>. Memory is the only source.</td>
+</tr>
+<tr>
+<td>Context sections</td>
+<td><code>insights</code></td>
+</tr>
+<tr>
+<td>Base prompt</td>
+<td><code>agents/ExecLearningsAgent/SOUL.md</code> (full base — <code>Analyst.md</code> not loaded)</td>
 </tr>
 </tbody>
 </table>
+<blockquote>
+<p>Confidence is fed asynchronously by the interim summarizer (no model-facing confidence tool exists). Runs that never get a summarizer call — sub-10s answers, <code>DisableInterimSummary</code> agents — show the completion floor (75) in the UI, and their Langfuse <code>final_confidence</code> metadata is omitted rather than fabricated.</p>
+</blockquote>
 <p><strong>Memory workflow:</strong></p>
 <ol>
 <li>Calls <code>load_relevant_learnings</code> for each type at the start of an investigation</li>
@@ -1647,7 +1799,18 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 <li>Detects gaps: investigations with no <code>save_learnings</code> call = unresolved knowledge</li>
 <li>Saves new learnings inline via <code>save_learnings</code></li>
 <li>On user correction: <code>load_relevant_learnings</code> → <code>update_memory</code> (delete) → <code>save_learnings</code> (new)</li>
+<li>Crosses the two memory sources against each other — topics investigated repeatedly with no <code>save_learnings</code> call are the unresolved gaps, and are the agent's headline finding</li>
+<li>Emits a ready-to-paste ticket draft for anything unresolved — it cannot file anything, and is told never to claim, promise, or offer otherwise</li>
 </ol>
+<p><strong>Why no integrations (read before re-adding them):</strong></p>
+<p>A revision on this branch granted Jira/GitHub/Confluence/ServiceNow reads through read-verb globs — <code>atlassian__get*</code>, <code>github*__list*</code>, <code>servicenow*__list*</code> — chosen so no pattern could match a write tool. Verified against 99 real tool names from the copeyemg tenant, the matcher denied every write. It still wasn't a boundary:</p>
+<ul>
+<li><strong><code>def.Tools</code> gates visibility, not execution.</strong> The allowlist is applied when building the per-turn tool list (<code>agent.go</code> ~7958). <code>executeTool</code> (~12207) dispatches anything present in the MCP registry and never consults <code>rs.allowedTools</code>.</li>
+<li><strong><code>tool_search</code> advertises the whole deferred catalog.</strong> <code>buildToolSearchDescription</code> (<code>tool_search.go:495</code>) filters only <code>AgentRestricted</code>, not the run's allowlist — so tools outside the grant are offered to the model with their schemas.</li>
+<li><strong>The write tools were not <code>AgentRestricted</code> on that tenant.</strong> They appeared in <code>tool_search</code> output, which skips restricted tools. So nothing downstream filtered them.</li>
+</ul>
+<p>Observed: <code>pagerduty__get_incident</code> and <code>github__list_pull_requests</code> both executed while matching no pattern in the grant.</p>
+<p>Granting integrations safely needs a <strong>dispatch-time allowlist check</strong> in <code>internal/ai</code>, not a longer glob list. Until that exists, <code>TestExecLearnings_{NoWildcard,NoToolSearch,NoIntegrationTools}</code> hold the line.</p>
 <hr />
 <h2 id="assimilation-per-type-logic">Assimilation: Per-Type Logic</h2>
 <p>The MemoryAssimilator orchestrates five steps (defined in <a href="https://github.com/neubirdai/falcon/blob/main/agents/MemoryAssimilator/SOUL.md"><code>agents/MemoryAssimilator/SOUL.md</code></a>):</p>

@@ -1,0 +1,1531 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AI-powered SRE platform. Connects to your telemetry databases and investigates incidents, health, cost, and performance using natural language.">
+      
+      
+      
+        <link rel="canonical" href="https://neubirdai.github.io/neubird-terminal/verified-rca-design/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/icon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Verified RCA Pipeline — Working Design Document - NeuBird Terminal</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/neubird.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#verified-rca-pipeline-working-design-document" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner">
+          <div class="md-banner__inner md-grid md-typeset">
+            
+            
+  <strong>Developer Preview</strong> &mdash; NeuBird Desktop is currently in developer preview. APIs and configuration options may change.
+
+          </div>
+          
+        </aside>
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="NeuBird Terminal" class="md-header__button md-logo" aria-label="NeuBird Terminal" data-md-component="logo">
+      
+  <img src="../assets/icon.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            NeuBird Terminal
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Verified RCA Pipeline — Working Design Document
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/neubirdai/falcon" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    neubirdai/falcon
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../getting-started/installation/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../features/investigations/" class="md-tabs__link">
+          
+  
+  
+  Features
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../usage/tui/" class="md-tabs__link">
+          
+  
+  
+  Usage
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="NeuBird Terminal" class="md-nav__button md-logo" aria-label="NeuBird Terminal" data-md-component="logo">
+      
+  <img src="../assets/icon.svg" alt="logo">
+
+    </a>
+    NeuBird Terminal
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/neubirdai/falcon" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    neubirdai/falcon
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Features
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/investigations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agentic Investigations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/headless-investigations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Headless Investigations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/health-sweeps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Health Sweeps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/cost-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cost Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/predictive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Predictive Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/preventive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Preventive Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/agent-personas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Personas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/tool-review/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tool Review (Ctrl+O)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/persistent-learning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Persistent Learning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/tui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terminal UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/slash-commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Slash Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/keyboard-shortcuts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Keyboard Shortcuts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/agent-personas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Personas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#task-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#progress-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Progress log
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#findings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Findings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Findings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t1-ask-flow-verified-against-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T1 — Ask flow (VERIFIED against code)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t2-structured-output-verified-mechanism-differs-from-my-first-guess" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T2 — Structured output (VERIFIED — mechanism differs from my first guess)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t3-citations-verified-internalaicitationgo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T3 — Citations (VERIFIED, internal/ai/citation.go)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t4-multi-agent-mechanisms-verified" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T4 — Multi-agent mechanisms (VERIFIED)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t5-frontmatter-extension-points-verified" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T5 — Frontmatter extension points (VERIFIED)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t6-synthesis-gating-verified-corrected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T6 — Synthesis gating (VERIFIED, corrected)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t7-design-see-design-section-below" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T7 — Design: see "Design" section below
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t8-cursor-comparison-see-why-coding-agents-feel-accurate-below" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T8 — Cursor comparison: see "Why coding agents feel accurate" below
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stage-graph-per-investigation-ask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage graph (per investigation ask)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evidence-continuity-the-ledger-added-2026-08-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evidence continuity — the ledger (added 2026-08-18)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alertcorrelator-inspired-principles-added-2026-08-17-at-ganeshs-direction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AlertCorrelator-inspired principles (added 2026-08-17 at ganesh's direction)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rca-contract-v1-emit_result-schema_id-payload-validator-added-at-agentgo-l11737" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        rca-contract-v1 (emit_result schema_id; payload validator added at agent.go L11737)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#go-mechanical-gate-new-internalaicontractgo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Go mechanical gate (new internal/ai/contract.go)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rcaverifier-agent-new-agentsrcaverifiermd-soulmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RcaVerifier agent (new agents/RcaVerifier.md + SOUL.md)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orchestration-where-the-pipeline-runner-lives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Orchestration: where the pipeline runner lives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retry-budget-failure-posture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retry budget &amp; failure posture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acceptance-test-already-owned" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance test (already owned)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-coding-agents-cursor-feel-accurate-and-what-transfers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why coding agents (Cursor) feel accurate — and what transfers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#session-notes-how-to-resume" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session notes / how to resume
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="verified-rca-pipeline-working-design-document">Verified RCA Pipeline — Working Design Document</h1>
+<p><strong>Goal:</strong> Design a concrete implementation, grounded in falcon's actual code, of a multi-stage verified-RCA pipeline:</p>
+<ol>
+<li>Context setup agent (TelemetryRecon — already created in <code>agents/TelemetryRecon*</code>)</li>
+<li>Hypothesis producer (investigator) — must emit <strong>structured output</strong> (RCA evidence contract: hypothesis ledger, onset timestamps, citations)</li>
+<li>Verifier — fresh context, refutes against the contract, structured verdict</li>
+<li>Judge / gate — mechanical checks in Go where possible; bounded retry loop</li>
+</ol>
+<p>Also answer: does this need subagents? How does it compare to what Cursor does?</p>
+<p><strong>Motivating evidence:</strong> 5 investigations of incident <code>93dd10ab</code> (swimlanemirror, Aug 15 queue backlog): only 1 of 5 (run A) found the verified root cause (producer surge vs 32-pod KEDA ceiling). The 4 wrong runs all: anchored on loud ES-master signals, never measured producer rate, cited post-peak evidence as cause, and passed citation verification anyway. Full analysis in the conversation of 2026-08-16/17; key traces in ~/Downloads/trace_*.json.</p>
+<hr />
+<h2 id="task-checklist">Task checklist</h2>
+<ul>
+<li>[x] T1. Map ask flow: server entry → sonnet_loop → opus_synthesis → citations → tldr/save_history; orchestrating function + key structs</li>
+<li>[x] T2. Structured output mechanism (<code>ends_with_structured_output</code> frontmatter): schema, enforcement, failure path</li>
+<li>[x] T3. Citations internals: what store_and_verify_citation stores/checks; where to add time-range validation</li>
+<li>[x] T4. Existing multi-agent mechanisms: Merger agent invocation, Workflow agent, agent selection for an ask; any spawn/delegate support</li>
+<li>[x] T5. Frontmatter extension points in internal/agents/agents.go (pattern for adding <code>verify_with:</code> / <code>pre_context_agent:</code>)</li>
+<li>[x] T6. Synthesis: prompt inputs, where a verdict could gate/inject</li>
+<li>[x] T7. Write the design: stages, Go structs/schemas, exact insertion points, retry loop, config</li>
+<li>[x] T8. Cursor comparison — why coding agents feel more accurate; what transfers</li>
+<li>[ ] T9. POC build (approved 2026-08-17; LLM-confirm stage after mechanical gate CONFIRMED wanted by ganesh):</li>
+<li>[x] T9a. <code>internal/rcacontract</code> package DONE — contract.go (types + Validate + agg-scope lint + AlertCorrelator additions: per-claim <code>evidence</code> lists, <code>alerts[]</code> completeness roster) + contract_test.go (15 tests replaying the 5 runs: A passes; C/E post-hoc cause → CAUSE_AFTER_SYMPTOM; B/C/D/E missing input row → LEDGER_MISSING_CLASS; D unscoped avg → AGG_SCOPE; E blocked-no-reason → LEDGER_BLOCKED_NO_REASON; roster/evidence/arithmetic/citation checks). <code>go test ./internal/rcacontract/</code> green.</li>
+<li>[x] T9b. DONE — <code>pre_context_agent</code>/<code>verify_with</code>/<code>max_verify_rounds</code> fields added to AgentDefinition + parse cases (internal/agents/agents.go); consumed by the pipeline driver (T9e), not the core loop (POC).</li>
+<li>[x] T9c. DONE — <code>internal/ai/rca_contract_output.go</code>: init() registers <code>rca.contract.v1</code> (rcacontract.Validate with rs-backed EvidenceResolver via lookupToolUseByCallIdx; static scope labels cluster/environment/region/account/namespace) and <code>rca.verdict.v1</code> (ValidateVerdict: pass=false needs violations, pass=true needs ≥1 reexecution) in the existing payloadValidators registry — violations flow back as emit_result tool errors, model retries in-loop. Verdict types in internal/rcacontract/verdict.go. IncidentAlertIDs returns nil in live runs (roster membership check offline-only for POC). build + tests green.</li>
+<li>[x] T9d. DONE — <code>agents/RcaVerifier{.md,/IDENTITY.md,/SOUL.md}</code> (referee: verbatim re-execution of load-bearing citations, timing/ledger/contradiction/baseline checks, default-fail, <code>context: []</code>, terminal <code>rca.verdict.v1</code>) + <code>agents/VerifiedAnalyst{.md,/IDENTITY.md,/SOUL.md}</code> (contract-bound investigator, AlertCorrelator-style SOUL: judgment + hard boundaries + non-negotiables + exact JSON example; <code>pre_context_agent: TelemetryRecon</code>, <code>verify_with: RcaVerifier</code>, <code>max_verify_rounds: 2</code>, terminal <code>rca.contract.v1</code>). Analyst/DeepAnalyst untouched.</li>
+<li>[x] T9e. DONE — driver is <strong>CLI-side, not server-side</strong> (POC decision: <code>internal/investigate</code> runs agents in-process via <code>agent.Execute</code>, so no server surgery needed). <code>internal/investigate/verified.go</code>: <code>neubird verified "&lt;prompt&gt;" [--project ...] [--agent VerifiedAnalyst]</code> → recon stage (fresh session, brief prepended) → investigator (session reused across rounds) → verifier (FRESH session per round; gets contract JSON + verified citations only, never the transcript) → violations fed back, ≤ max_verify_rounds → stdout JSON <code>{verified, rounds, contract, verdict}</code> + VERIFIED/UNVERIFIED banner on stderr. <code>main.go</code> dispatch case added. Setup block intentionally mirrors runInvestigation (contained duplication, marked POC).</li>
+<li>[x] T9f. DONE — <code>go build ./...</code> green; <code>go test ./internal/{rcacontract,agents,investigate,ai,server}/</code> all green (ai suite flaked once on first run, passed twice on re-run — pre-existing flake, unrelated).</li>
+</ul>
+<h2 id="progress-log">Progress log</h2>
+<ul>
+<li>2026-08-17 (1): Document created with provisional findings.</li>
+<li>2026-08-17 (2): T1–T6 <strong>verified against code</strong> (executeInternal L4395; emit_result/schema_id mechanism — NOT a schema file; no extraContext arg; no chaining anywhere). Corrections applied to Findings T1/T2/T3/T6 and to the Design contract-enforcement point (agent.go L11737). T7/T8 written.</li>
+<li>2026-08-17 (8): <strong>First end-to-end VERIFIED run — pipeline loop worked, one blind spot exposed.</strong> Round 1 verdict refuted a false "14-min producer lead" (+2 more violations); feedback round corrected it; round 2 re-executed load-bearing queries and passed. Final contract: producer surge trigger + concurrent-onset timing analysis (correct, matches ground truth) BUT claims "pod count pinned flat at 13, zero scaling events" — contradicted by three prior independent measurements (rabbitmq_detailed_queue_consumers 10→32 pinned at ceiling, verified live via ACE; run B restart series; recon pod listing). Source of the error: <code>kube_replicaset_owner</code> used as a pod-count proxy (it counts ReplicaSet metadata series incl. historical revisions, not pods; KEDA ScaledObject read was 403). The verifier reproduced the same wrong number verbatim and passed it — <strong>reproducible ≠ valid; verbatim-only re-execution cannot catch a wrong instrument</strong>. Also dependency_degraded=refuted discards the previously-proven ES 429-crash mechanism (should be confirmed-but-secondary). FIX: RcaVerifier SOUL check #2 added — instrument corroboration (direct-vs-proxy triage; cross-instrument comparison when a second instrument exists; metadata-shaped metrics always need corroboration; disagreement = INSTRUMENT_INVALID). RCA scorecard: ~80% correct; VERIFIED badge overconfident this round.</li>
+<li>2026-08-17 (7): **Third live run: real root cause of the missing emits found — <code>emit_result</code> is <code>AgentRestricted: true</code> (internal/ai/tools.go ~L365): it is offered ONLY when explicitly named in the agent def's <code>tools:</code> list; the <code>*</code> wildcard excludes restricted tools by design (precedent: TaskBuilder/IncidentFilterBuilder/SkillBuilder all list it explicitly). The model even reported it honestly ("emit_result … not among the loadable tools", verified via tool_search). FIX: <code>emit_result</code> added to VerifiedAnalyst and RcaVerifier tools lists. Contract quality this round: NEW genuine mechanism evidence (verbatim 429 <code>process_cluster_event_timeout_exception</code> crash log on PUT /_ilm/policy at 08:57:02Z; 12 pods restarting; recurrence — 2 prior firings, fingerprint first_seen 08-12) BUT two regressions the gates would have caught had the in-loop validator been reachable: (a) <code>input_increased: "unexplained"</code> — illegal verdict (validator enum) AND the classic dropped-producer-thread failure (guessed metric names, empty result, no discovery — the surge is verified ground truth at 4,102/min); (b) arithmetic self-contradiction: 29→135,534 in ~21min requires ≥~6,400/min net inflow — even a TOTAL consumer stall cannot produce that backlog at baseline inflow (500-1,500/min), so its own arithmetic_closure REQUIRES the producer surge it declined to measure; (c) still carries the "(max 200)" log-display-cap misread as "saturated at max 200 tasks" (measured pending was 651-755). These are precisely verifier-round challenges.</li>
+<li>2026-08-17 (6): **Second live TUI run: investigator produced the best RCA yet (hybrid: producer surge → simultaneous rollup-index creation → ES master task-queue churn; all 5 ledger rows measured; onset timing derived correctly, e.g. pending-queue nonempty since 08:55:43Z from the warn-threshold arithmetic; trigger re-verified exactly 135534) — but wrote the contract as a fenced JSON block in prose and never called emit_result → pipeline errored "ended without emitting". ROOT CAUSE: <code>ends_with_structured_output</code> only suppresses the prose nudge; the core loop has NO forced terminal elicitation (the falcon.structured_output span path fires only for cfg.OutputSchema slash-command skills). FIXES: (a) <code>internal/rcacontract/recover.go</code> — ExtractContractJSON (handles nested envelope / flattened envelope with inline schema_id / bare payload; last fence wins; tested) + EmitNudgePrompt; (b) both drivers now: missing contract → one nudge turn on the same session (in-loop validation applies fully) → else text-rescue with offline Validate (citation cross-checks skipped, flagged in stream); (c) VerifiedAnalyst hardening: max_tool_rounds 40, SOUL non-negotiables now demand emit-before-bookkeeping (the failed run spent turn 21 on save_learnings and ran out of room) and state that printed JSON ≠ delivered. Refactor note: the proper fix is a forced terminal elicitation in executeInternal when ends_with_structured_output is set and the loop ends without a terminal emit — add alongside the nil-guard refactor item.</li>
+<li>2026-08-17 (5): <strong>Crash fix from first live TUI run.</strong> The recon stage completed (brief rendered — including honest coverage-gap reporting: get_alert_context returned empty contexts and list_incident_alerts returned zero rows for the incident in that env), then SIGSEGV at agent.go:5528: <code>cb.OnDone(...)</code> is invoked UNGUARDED by executeInternal, and both pipeline drivers' lean stage callbacks omitted OnDone (nil func). Fix: stage callbacks now populate every field the core loop may call directly (OnDone/OnContinuePrompt/OnDataRead/OnSources/OnCitations/OnInterimSummary/OnTodosUpdate/OnHealthReport/OnFollowUp as no-ops or renderer pass-throughs), plus a <code>recover()</code> in both runPipelineStage implementations so a future stage panic degrades to a stage error instead of killing the process. Build + tui/investigate tests green. LESSON for the server port: AgentCallback fields are not uniformly nil-guarded — any new caller must supply the full set (or executeInternal should gain nil guards; note as refactor item). Also follow up: why get_alert_context/list_incident_alerts were empty for a real incident id in the TUI env — recon compensated correctly, but those sources should have had data.</li>
+<li>2026-08-17 (4): <strong>TUI pipeline wired</strong> (T9g). <code>internal/tui/verified_pipeline.go</code>: <code>runInvestigation</code> branches when the active agent def has <code>pre_context_agent</code>/<code>verify_with</code> — same trigger as any TUI chat (pick VerifiedAnalyst via <code>/agent</code>, type the question), staged execution underneath (recon fresh session → investigator rounds on the TUI session → verifier fresh session; violations fed back; banners + ✅ VERIFIED / ⚠ UNVERIFIED rendered in-stream; contract rendered as a compact summary block). Prompt-building shared with the CLI driver via new <code>internal/rcacontract/prompts.go</code> (VerifierPrompt / ViolationFeedbackPrompt / CitationLine). Note: pipeline stages use a lean callback (text/tools/citations/progress); stage <code>OnDone</code> suppressed — the pipeline fires <code>SetDone</code> once at the end. Build + tui/investigate/rcacontract/agents tests green.</li>
+<li>2026-08-17 (3): T9 POC <strong>built and green</strong>. New: <code>internal/rcacontract/{contract,verdict}.go</code> + tests; <code>internal/ai/rca_contract_output.go</code> (validator registration); <code>internal/agents/agents.go</code> (3 frontmatter fields); <code>agents/{RcaVerifier,VerifiedAnalyst}</code> (+ TelemetryRecon from earlier); <code>internal/investigate/verified.go</code> + <code>main.go</code> (<code>neubird verified</code> command). AlertCorrelator principles folded in (per-claim evidence lists, alerts[] completeness roster, hard-boundaries/non-negotiables SOUL structure). Next steps (not started): live smoke run of <code>neubird verified</code> against a real incident (needs login + project); the acceptance replay (B/C/D/E contracts must fail, A must pass — unit tests cover this at the validator level, an eval should cover it end-to-end); server-side chaining to replace the CLI driver; IncidentAlertIDs plumbing for live roster-membership checks; citation time-range validation (T3 extension point, deferred).</li>
+</ul>
+<hr />
+<h2 id="findings">Findings</h2>
+<h3 id="t1-ask-flow-verified-against-code">T1 — Ask flow (VERIFIED against code)</h3>
+<ul>
+<li>Orchestrator: <code>internal/ai/agent.go</code> → <strong><code>(*agent).executeInternal</code></strong> (L4395). Contains, in sequence:</li>
+<li>span <code>falcon.ask</code> (L5038) + cost accumulator + <code>runState</code> reset (struct at L172 — holds messages, <code>toolCalls</code>/<code>toolUseRecord</code>s, citations, charts, counters)</li>
+<li>span <code>falcon.sonnet_loop</code> (L5224) — the tool-use loop</li>
+<li>span <code>falcon.structured_output</code> (L5170) — structured-output flow when enabled</li>
+<li>span <code>falcon.opus_synthesis</code> (two call sites: L5212, L5346 — interim &amp; final paths)</li>
+<li>citations verification: <code>internal/ai/citation.go</code> L2410 (span <code>falcon.citations</code>)</li>
+<li>ACE history: <code>(*agent).saveACEHistory</code> (agent.go L3100)</li>
+<li>Server side: <code>internal/server/server.go</code> ~L1618-1625 resolves the agent definition (<code>def</code>) and calls <code>SetInvestigatorAgentName(def.Name)</code> on the agent; the def flows into <code>executeInternal(ctx, rs, def, question, cb, cfg)</code>.</li>
+</ul>
+<h3 id="t2-structured-output-verified-mechanism-differs-from-my-first-guess">T2 — Structured output (VERIFIED — mechanism differs from my first guess)</h3>
+<ul>
+<li>No per-agent JSON schema file. The mechanism is a generic <strong><code>emit_result</code> tool</strong> (allowlisted at agent.go L6970, handled at L11737) whose input is <code>{schema_id, payload}</code> → <code>StructuredOutputEvent</code> (internal/ai/structured_output.go L17). Payload is validated only as a non-empty JSON <em>object</em> (<code>normalizeStructuredPayload</code>); <strong>shape validation per schema_id is NOT done in the loop</strong> — the jobrunner transport routes on schema_id.</li>
+<li>Frontmatter: <code>ends_with_structured_output</code> (agents.go L594) suppresses the prose-answer nudge; <code>structured_output_schemas</code> (L596) restricts allowed schema ids; <code>terminal_structured_output_schemas</code> (L598) lists which schema ends the flow (sets <code>rs.structuredOutputSchemas</code> / <code>rs.terminalStructuredOutputSchemas</code>, agent.go L4437-4438).</li>
+<li>⇒ For the RCA contract we must ADD a per-schema payload validator at the <code>emit_result</code> handler (agent.go L11737): on violation, return the errors as the tool result so the model retries in-loop. The retry-on-invalid pattern exists for envelope errors already; extending to schema-shape errors is the same code path.</li>
+</ul>
+<h3 id="t3-citations-verified-internalaicitationgo">T3 — Citations (VERIFIED, internal/ai/citation.go)</h3>
+<ul>
+<li>Verification is verbatim-substring with normalization: <code>matchCitationExcerpt</code> (L279) over haystacks from <code>toolUseOutputForCitation</code>/<code>citationHaystacksFor</code> (L401/L430); normalized <code>strings.Contains</code> at L458-463. Provenance recorded (<code>buildCitationProvenance</code> L301). Tool prompt mandates "copied verbatim … single JSON string value, field value, or log line" (L51).</li>
+<li><code>resolveToolUseForCitation</code> (L519) resolves idx/id → <code>toolUseRecord</code>; records retain input + output, so timestamps of the cited data are recoverable.</li>
+<li>Time-range extension point: add optional <code>claim_time_utc</code> + <code>evidence_time_utc</code> fields to the citation input; validate in the same function that does the substring check (post-match): parse evidence_time from the matched record region, require |evidence − claim| sane and evidence ≤ claimed-cause-onset when the citation backs a cause claim. Alternative (simpler v1): do time checks only in the contract validator (T7), which cross-references citation indices.</li>
+</ul>
+<h3 id="t4-multi-agent-mechanisms-verified">T4 — Multi-agent mechanisms (VERIFIED)</h3>
+<ul>
+<li><strong>No subagent/spawn/delegate tool exists; no server-side chaining.</strong> grep for Merger in internal/ returns nothing — <code>agents/Merger.md</code> is a persona invoked as its own ask by an external caller (UI/script/merlin). Workflow agent likewise.</li>
+<li>Agent selection per ask: request's agent name → def (server.go ~L1618); merlin's FalconSubmit chooses the agent per task.</li>
+<li>⇒ Chaining must be added: either a thin server-side pipeline in the ask path (preferred, see Design) or merlin-side sequential asks.</li>
+</ul>
+<h3 id="t5-frontmatter-extension-points-verified">T5 — Frontmatter extension points (VERIFIED)</h3>
+<ul>
+<li>Parser: switch in internal/agents/agents.go L558-608 (<code>name, uuid, description, speed, quality, model, skills, tools, max_tokens, max_tool_rounds, thinking_mode, user_invocable, disable_synthesis, auto_continue, disable_interim_summary, save_report_pdf, disable_semantic_search, treat_thinking_as_non_empty, ends_with_structured_output, structured_output_schemas, terminal_structured_output_schemas, enable_citations, context, timeout_minutes, execution_cost_cap_dollars</code>).</li>
+<li>Adding a field = new case + Definition field + consume in server (askCommon-equivalent) or in executeInternal. <code>disable_synthesis</code>/<code>enable_citations</code> are the cleanest templates.</li>
+<li>Proposed new fields: <code>pre_context_agent: TelemetryRecon</code>, <code>verify_with: RcaVerifier</code>, <code>max_verify_rounds: 2</code>, and reuse <code>terminal_structured_output_schemas: [rca-contract-v1]</code> for the contract.</li>
+</ul>
+<h3 id="t6-synthesis-gating-verified-corrected">T6 — Synthesis gating (VERIFIED, corrected)</h3>
+<ul>
+<li>There is no <code>extraContext</code> arg (my earlier guess — wrong). The two opus_synthesis call sites live inside <code>executeInternal</code> (L5212 interim path, L5346 final path); the synthesis prompt is assembled inline there from the run transcript.</li>
+<li>Gate placement: in <code>executeInternal</code>, after the sonnet_loop returns and the terminal <code>emit_result(rca-contract-v1)</code> is captured, BEFORE the L5346 synthesis call site: run (a) the Go contract validator, (b) the RcaVerifier sub-ask. Inject the verdict by appending a system/user message to the transcript the synthesis prompt is built from (same way interim summaries already enter the message stream).</li>
+</ul>
+<h3 id="t7-design-see-design-section-below">T7 — Design: see "Design" section below</h3>
+<h3 id="t8-cursor-comparison-see-why-coding-agents-feel-accurate-below">T8 — Cursor comparison: see "Why coding agents feel accurate" below</h3>
+<hr />
+<h2 id="design">Design</h2>
+<h3 id="stage-graph-per-investigation-ask">Stage graph (per investigation ask)</h3>
+<pre><code class="language-text">merlin FalconSubmit / UI ask
+        │
+        ▼
+[0] TelemetryRecon (pre_context_agent)          — subagent ask #1 (cheap model ok)
+        │  context brief (trigger verdict, entities, topology,
+        │  validated shapes, firing history)
+        ▼
+[1] Investigator (Analyst/DeepAnalyst)           — main ask
+        │  ends_with_structured_output: rca-contract-v1
+        ▼
+[G] Go mechanical gate (no LLM)                  — internal/ai/contract.go (new)
+        │  cause_onset ≤ symptom_onset; ledger complete;
+        │  citations resolve; agg-scope lint; arithmetic present
+        │  FAIL → tool-error style feedback → resume loop (≤2 rounds)
+        ▼
+[2] RcaVerifier (verify_with)                    — subagent ask #2, FRESH session
+        │  input: contract JSON + citation excerpts ONLY (no transcript!)
+        │  structured verdict: {pass, violations[], missing_measurements[]}
+        │  FAIL → violations injected as user turn → investigator resumes (≤max_verify_rounds)
+        ▼
+[3] Synthesis (existing opus_synthesis)          — verdict in extraContext
+        ▼
+    Citations verify (existing) + NEW time-range check
+</code></pre>
+<h3 id="evidence-continuity-the-ledger-added-2026-08-18">Evidence continuity — the ledger (added 2026-08-18)</h3>
+<p>Six shipped bugs shared one cause: the citable tool-call catalog was scoped to a single Execute while the pipeline's evidence spans stages (recon → investigator rounds → nudges → fix-ups). Each incident was patched locally (offline validation flags, citation merging, prompt boundaries) until the class was closed structurally: <code>ai.EvidenceLedger</code>, one per pipeline run, passed via <code>RunConfig</code> to every PRODUCER stage. Each producer Execute seeds its catalog from the ledger and mirrors new calls back, so <code>cited_tool_call_idx</code> values are continuous across recon and all correction rounds — contracts cite recon's measurements directly, carried indices survive full in-loop validation, and <code>OfflineContractValidation</code> was deleted. The verifier NEVER shares the ledger: the referee re-executes cited queries in a fresh evidence world — that independence is the product. Vocabulary note: "onset from the data" now includes recon's data; the investigator re-measures only for fresh values or doubted numbers.</p>
+<p>Judge note: stage [G]+[2] <em>is</em> the judge for single runs. A separate LLM "judge" only appears in the ensemble variant: N parallel investigator asks → Merger adjudicates <strong>by contract score, never majority</strong> (our 5-run sample: majority elects the wrong RCA 4:1).</p>
+<h3 id="alertcorrelator-inspired-principles-added-2026-08-17-at-ganeshs-direction">AlertCorrelator-inspired principles (added 2026-08-17 at ganesh's direction)</h3>
+<p><code>agents/AlertCorrelator/SOUL.md</code> is the production-proven template for structure+evidence discipline. Lifted into this design:</p>
+<ol>
+<li><strong>Per-claim evidence gate</strong>: every ledger row and the root cause carry an <code>evidence: []string</code> list of concrete named signals (entities, timestamps, values) plus a citation — mirroring <code>alerts[].evidence</code>. "A claim you cannot back with valid evidence is not confirmed."</li>
+<li><strong>Completeness roster</strong>: the contract gains <code>alerts[]</code> — every alert in the incident, exactly once, with <code>disposition: explained_by_root_cause | separate_issue | unexplained</code> + evidence for <code>explained</code> members. A root cause that silently ignores half the incident's alerts fails validation (mirrors "return every input alert exactly once; never drop one").</li>
+<li><strong>Judgment vs hard boundaries</strong>: investigator/verifier SOULs follow AlertCorrelator's shape — judgment is free ("not a recipe"), but a <strong>Hard boundaries (not judgment calls)</strong> section + closing <strong>Non-negotiables</strong> checklist state the mechanical invariants (cause ≤ symptom onset, all ledger classes terminated, evidence per claim, ids verbatim).</li>
+<li>Vocabulary note — the contract's "onset from the data, not alert metadata" and the time-anchor principle "the alert/ticket record is authoritative for WHEN" are compatible, not in tension: the fetched alert/ticket record pins the <em>symptom</em> onset and the query windows (it IS citable data — you fetched it), while <em>cause</em> onsets come from the backing telemetry series. "Not alert metadata" forbids trusting unverified enrichment prose, not the record's own fire/filing timestamp.</li>
+<li><strong>Exhaustive output spec</strong>: exact JSON example + field notes + "required always, even when false/[]" + honest confidence semantics ("the pipeline may gate on this, so judge it honestly").</li>
+<li><strong>Precision over recall</strong>: a narrow verified RCA beats a broad unverified one; when evidence doesn't clear the gate, say <code>unexplained</code> rather than stretch.</li>
+<li><strong>Delivery discipline</strong>: the terminal <code>emit_result(rca.contract.v1)</code> IS the delivery — final action, reasoning in earlier turns.</li>
+</ol>
+<h3 id="rca-contract-v1-emit_result-schema_id-payload-validator-added-at-agentgo-l11737">rca-contract-v1 (emit_result schema_id; payload validator added at agent.go L11737)</h3>
+<pre><code class="language-json">{
+  &quot;symptom&quot;: {&quot;description&quot;: &quot;&quot;, &quot;onset_utc&quot;: &quot;&quot;, &quot;citation_idx&quot;: 0},
+  &quot;root_cause&quot;: {&quot;description&quot;: &quot;&quot;, &quot;onset_utc&quot;: &quot;&quot;, &quot;citation_idx&quot;: 0,
+                  &quot;mechanism&quot;: &quot;&quot;, &quot;arithmetic_closure&quot;: &quot;&quot;,
+                  &quot;evidence&quot;: [&quot;&lt;concrete signal: entity, timestamp, value&gt;&quot;]},
+  &quot;hypothesis_ledger&quot;: [
+    {&quot;class&quot;: &quot;input_increased|capacity_decreased|dependency_degraded|change_event|external&quot;,
+     &quot;verdict&quot;: &quot;confirmed|refuted|blocked&quot;,
+     &quot;measurement&quot;: &quot;&quot;, &quot;evidence&quot;: [], &quot;citation_idx&quot;: 0, &quot;blocked_reason&quot;: &quot;&quot;}
+  ],
+  &quot;alerts&quot;: [
+    {&quot;id&quot;: &quot;&lt;alert-id verbatim&gt;&quot;, &quot;disposition&quot;: &quot;explained_by_root_cause|separate_issue|unexplained&quot;,
+     &quot;evidence&quot;: [&quot;&lt;why the root cause explains THIS alert&gt;&quot;], &quot;reason&quot;: &quot;&quot;}
+  ],
+  &quot;baseline_check&quot;: {&quot;window&quot;: &quot;&quot;, &quot;cause_present_in_baseline&quot;: false, &quot;detail&quot;: &quot;&quot;, &quot;citation_idx&quot;: 0},
+  &quot;trigger_verification&quot;: {&quot;verdict&quot;: &quot;CONFIRMED|MISMATCH|UNVERIFIABLE&quot;, &quot;detail&quot;: &quot;&quot;},
+  &quot;confidence&quot;: {&quot;mechanism&quot;: &quot;high|medium|low&quot;, &quot;trigger&quot;: &quot;high|medium|low&quot;}
+}
+</code></pre>
+<p>All five ledger classes REQUIRED (Go check for class coverage) — this alone rejects runs B/C/D/E (empty <code>input_increased</code> row). Confirmed/refuted rows require measurement + evidence + citation (per-claim evidence gate). <code>alerts[]</code> roster: every incident alert exactly once; <code>explained_by_root_cause</code> members require evidence (completeness invariant).</p>
+<h3 id="go-mechanical-gate-new-internalaicontractgo">Go mechanical gate (new internal/ai/contract.go)</h3>
+<p>Checks (all domain-agnostic, no LLM):</p>
+<ol>
+<li><code>root_cause.onset_utc &lt;= symptom.onset_utc</code> (kills C/E post-hoc causes)</li>
+<li>every ledger class present, none "blocked" without <code>blocked_reason</code> naming what was tried</li>
+<li>every citation_idx exists in toolCalls; cited result contains the onset timestamps claimed (extends T3 check)</li>
+<li>PromQL lint on cited queries: aggregation without cluster/env label while alert labels contain one → violation (kills D's diluted avg)</li>
+<li><code>arithmetic_closure</code> non-empty and mentions both an inflow and a drain figure
+Failure → synthetic tool-result feedback into the still-open loop (same mechanism as schema validation failure), so the investigator fixes it in-session. Cheap, no new context.</li>
+</ol>
+<h3 id="rcaverifier-agent-new-agentsrcaverifiermd-soulmd">RcaVerifier agent (new agents/RcaVerifier.md + SOUL.md)</h3>
+<ul>
+<li>Fresh ask, <code>context: []</code> (no session inheritance — C→B contagion showed why), small tool set: read-only query tools ONLY for spot re-execution of cited queries, no discovery tools.</li>
+<li>Input: the contract JSON + resolved citation excerpts. NOT the investigator transcript (prevents anchor inheritance).</li>
+<li>SOUL: "You are a referee. Attempt to refute: (a) re-run 2-3 load-bearing cited queries verbatim; (b) check each refuted/blocked ledger row was genuinely attempted; (c) hunt internal contradictions; (d) default to fail on uncertainty."</li>
+<li><code>ends_with_structured_output</code>: <code>{pass: bool, violations: [{code, detail, ledger_class?}], reexecution_results: []}</code>.</li>
+</ul>
+<h3 id="orchestration-where-the-pipeline-runner-lives">Orchestration: where the pipeline runner lives</h3>
+<p>Two options, recommend (a):
+(a) <strong>Server-side chain in askAce</strong> (internal/server): if agent def has <code>pre_context_agent</code>/<code>verify_with</code>, askAce runs the sub-asks sequentially, threading outputs. ~200 LoC; reuses everything (sessions, tracing, cost caps). Each stage is its own trace (<code>falcon.ask</code> children) — evaluable independently.
+(b) Merlin-side: FalconSubmit issues 3 sequential asks. More moving parts, crosses repo boundary, but zero falcon changes. Rejected for latency of iteration.</p>
+<h3 id="retry-budget-failure-posture">Retry budget &amp; failure posture</h3>
+<ul>
+<li>gate/verifier rounds: ≤2 each. On exhaustion do NOT block the report: publish with banner <code>UNVERIFIED: &lt;violations&gt;</code> + confidence forced to low. An SRE seeing a wrong-but-flagged report beats silence.</li>
+<li>Cost: recon (~$0.3, small model) + verifier (~$0.5) on top of ~$4 investigations; ~20% overhead. Ensemble mode (3×investigator + Merger) reserved for high-risk incidents.</li>
+</ul>
+<h3 id="acceptance-test-already-owned">Acceptance test (already owned)</h3>
+<p>Replay incident 93dd10ab: gate+verifier must REJECT the B/C/D/E contracts (each for its specific violation: post-hoc cause / empty input row / diluted agg / unmeasured publish rate) and PASS A's. Then N fresh runs with pipeline on → measure convergence to producer-surge RCA. Evals live in evals/ (existing harness).</p>
+<hr />
+<h2 id="why-coding-agents-cursor-feel-accurate-and-what-transfers">Why coding agents (Cursor) feel accurate — and what transfers</h2>
+<p>Cursor does NOT run hypothesis→verifier→judge chains. Its architecture (public info as of early 2026): single agent loop + strong retrieval (codebase embedding index), a specialized apply/diff model, and — the decisive part — <strong>cheap objective verifiers supplied by the environment</strong>: compiler, type-checker, linters, tests. The agent iterates against ground truth that costs milliseconds and never lies. Accuracy comes from tight feedback loops with an oracle, not from multi-agent structure.</p>
+<p>RCA has no compiler. The design above is therefore <em>manufacturing</em> the oracle: the mechanical gate (timestamps, ledger completeness, citation time-ranges, agg-scope lint) is the "type-checker for causal claims", and the verifier's query re-execution is the "test run". Subagents are needed only where fresh context matters (verifier independence, recon isolation) — the gate itself is plain Go and free. That's the honest answer to "does this need subagents": two extra asks per investigation, yes; but the biggest correctness win (the mechanical gate) needs none.</p>
+<hr />
+<h2 id="session-notes-how-to-resume">Session notes / how to resume</h2>
+<ul>
+<li>TelemetryRecon agent already exists (created earlier today): agents/TelemetryRecon.md + TelemetryRecon/{IDENTITY,SOUL}.md; <code>go test ./internal/agents/</code> green.</li>
+<li>If resuming after interruption: check Task checklist above; T9 (skeleton code) is the only open item and needs user go-ahead.</li>
+<li>Line numbers above are approximate (agent.go is ~13k lines); re-grep span names ("falcon.sonnet_loop", "falcon.opus_synthesis") to relocate.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

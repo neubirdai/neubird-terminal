@@ -1163,7 +1163,7 @@
 
 
 <h1 id="persistent-learning">Persistent Learning</h1>
-<p>NeuBird gets smarter the more you use it. It accumulates two types of knowledge across sessions, stored locally in <code>~/.config/neubird/</code>.</p>
+<p>NeuBird gets smarter the more you use it. It accumulates two types of knowledge across sessions, stored server-side in ConfigDB and scoped to the project, so everyone working on that deployment shares one set of learnings.</p>
 <hr />
 <h2 id="sql-learnings">SQL Learnings</h2>
 <p>When a SQL query fails — for example, because a specific function isn't supported by your database's Foreign Data Wrapper — NeuBird saves a rule about what doesn't work. On subsequent sessions, these rules are injected into the system prompt so NeuBird avoids repeating the same mistakes.</p>
@@ -1218,7 +1218,7 @@
 </tr>
 </tbody>
 </table>
-<p>Learnings persist across sessions and are stored in <code>~/.config/neubird/learnings/</code> and <code>~/.config/neubird/table_learnings/</code>. Delete these directories to reset all learned knowledge.</p>
+<p>Learnings persist across sessions in ConfigDB (<code>ace.sql_learnings</code>, <code>ace.table_learnings</code>), written and read through ACE's memory tools. Nothing is kept on the machine running the CLI: a run without an ACE session still learns within that run, but drops what it learned at exit.</p>
 
 
 

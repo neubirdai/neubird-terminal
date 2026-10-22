@@ -506,6 +506,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#homebrew-macos-linux" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1135,6 +1146,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#homebrew-macos-linux" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1231,6 +1253,27 @@
 <h1 id="installation">Installation</h1>
 <p>NeuBird Terminal is distributed as a single binary. Choose the method that suits your environment.</p>
 <hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<p>NeuBird Terminal uses your own LLM credentials — it does not ship with a key.
+Set <strong>one</strong> of the following before launching it.</p>
+<p><strong>Anthropic:</strong></p>
+<pre><code class="language-bash">export ANTHROPIC_API_KEY=sk-ant-...
+</code></pre>
+<p><strong>AWS Bedrock:</strong></p>
+<pre><code class="language-bash">export BEDROCK_AWS_ACCESS_KEY_ID=...
+export BEDROCK_AWS_SECRET_ACCESS_KEY=...
+export BEDROCK_AWS_REGION=us-west-2      # default
+</code></pre>
+<p>Or, with token-based authentication, <code>BEDROCK_API_KEY</code> instead of the two
+access-key variables.</p>
+<p>The provider is auto-detected from whichever credentials are present; set
+<code>LLM_PROVIDER</code> to <code>anthropic</code> or <code>bedrock</code> to choose explicitly. See
+<a href="../../configuration/env-vars/">Environment Variables</a> for the full list.</p>
+<p>You also need a NeuBird account on your organization's deployment
+(<code>https://yourcompany.app.neubird.ai</code>) — ask your administrator if you do not
+have one. Connections to your telemetry sources are configured there, not in
+the terminal.</p>
+<hr />
 <h2 id="homebrew-macos-linux">Homebrew (macOS / Linux)</h2>
 <pre><code class="language-bash">brew install neubirdai/tap/neubird-terminal
 </code></pre>
@@ -1243,15 +1286,23 @@
 </code></pre>
 <hr />
 <h2 id="debian-ubuntu">Debian / Ubuntu</h2>
-<p>Download the <code>.deb</code> package from the <a href="https://github.com/neubirdai/neubird-terminal/releases/latest">latest release</a>:</p>
-<pre><code class="language-bash">curl -LO https://github.com/neubirdai/neubird-terminal/releases/latest/download/neubird_linux_amd64.deb
-sudo dpkg -i neubird_linux_amd64.deb
+<p>Release assets are version-stamped, so resolve the current version first:</p>
+<pre><code class="language-bash">VERSION=$(curl -fsSL https://api.github.com/repos/neubirdai/neubird-terminal/releases/latest \
+  | sed -n 's/.*&quot;tag_name&quot;: *&quot;v*\([^&quot;]*\)&quot;.*/\1/p')
+: &quot;${VERSION:?could not resolve the latest release; check https://github.com/neubirdai/neubird-terminal/releases}&quot;
+curl -fLO &quot;https://github.com/neubirdai/neubird-terminal/releases/download/v${VERSION}/neubird_${VERSION}_linux_amd64.deb&quot;
+sudo dpkg -i &quot;neubird_${VERSION}_linux_amd64.deb&quot;
 </code></pre>
+<p>Replace <code>amd64</code> with <code>arm64</code> on 64-bit ARM.</p>
 <hr />
 <h2 id="rpm-fedora-rhel-centos">RPM (Fedora / RHEL / CentOS)</h2>
-<pre><code class="language-bash">curl -LO https://github.com/neubirdai/neubird-terminal/releases/latest/download/neubird_linux_amd64.rpm
-sudo rpm -i neubird_linux_amd64.rpm
+<pre><code class="language-bash">VERSION=$(curl -fsSL https://api.github.com/repos/neubirdai/neubird-terminal/releases/latest \
+  | sed -n 's/.*&quot;tag_name&quot;: *&quot;v*\([^&quot;]*\)&quot;.*/\1/p')
+: &quot;${VERSION:?could not resolve the latest release; check https://github.com/neubirdai/neubird-terminal/releases}&quot;
+curl -fLO &quot;https://github.com/neubirdai/neubird-terminal/releases/download/v${VERSION}/neubird_${VERSION}_linux_amd64.rpm&quot;
+sudo rpm -i &quot;neubird_${VERSION}_linux_amd64.rpm&quot;
 </code></pre>
+<p>Replace <code>amd64</code> with <code>arm64</code> on 64-bit ARM.</p>
 <hr />
 <h2 id="docker">Docker</h2>
 <pre><code class="language-bash">docker pull neubirdai/neubird-terminal:latest
@@ -1262,6 +1313,8 @@ sudo rpm -i neubird_linux_amd64.rpm
 <hr />
 <h2 id="binary-download">Binary download</h2>
 <p>Pre-built binaries for macOS, Linux, and Windows are available on the <a href="https://github.com/neubirdai/neubird-terminal/releases/latest">releases page</a>.</p>
+<p>Asset names include the version, shown here as <code>&lt;version&gt;</code> (for example
+<code>neubird_1.0.102_darwin_arm64.tar.gz</code>).</p>
 <table>
 <thead>
 <tr>
@@ -1274,33 +1327,60 @@ sudo rpm -i neubird_linux_amd64.rpm
 <tr>
 <td>macOS</td>
 <td>Apple Silicon</td>
-<td><code>neubird_darwin_arm64.tar.gz</code></td>
+<td><code>neubird_&lt;version&gt;_darwin_arm64.tar.gz</code></td>
 </tr>
 <tr>
 <td>macOS</td>
 <td>Intel</td>
-<td><code>neubird_darwin_amd64.tar.gz</code></td>
+<td><code>neubird_&lt;version&gt;_darwin_amd64.tar.gz</code></td>
 </tr>
 <tr>
 <td>Linux</td>
 <td>x86_64</td>
-<td><code>neubird_linux_amd64.tar.gz</code></td>
+<td><code>neubird_&lt;version&gt;_linux_amd64.tar.gz</code></td>
 </tr>
 <tr>
 <td>Linux</td>
 <td>ARM64</td>
-<td><code>neubird_linux_arm64.tar.gz</code></td>
+<td><code>neubird_&lt;version&gt;_linux_arm64.tar.gz</code></td>
 </tr>
 <tr>
 <td>Windows</td>
 <td>x86_64</td>
-<td><code>neubird_windows_amd64.zip</code></td>
+<td><code>neubird_&lt;version&gt;_windows_amd64.zip</code></td>
+</tr>
+<tr>
+<td>Windows</td>
+<td>ARM64</td>
+<td><code>neubird_&lt;version&gt;_windows_arm64.zip</code></td>
 </tr>
 </tbody>
 </table>
-<p>Extract and move to your PATH:</p>
-<pre><code class="language-bash">tar -xzf neubird_darwin_arm64.tar.gz
-mv neubird /usr/local/bin/
+<p>On macOS and Linux, download the tarball for your platform and move the binary
+onto your PATH. <code>&lt;version&gt;</code> in the table above is a placeholder; these commands
+resolve it for you:</p>
+<pre><code class="language-bash">VERSION=$(curl -fsSL https://api.github.com/repos/neubirdai/neubird-terminal/releases/latest \
+  | sed -n 's/.*&quot;tag_name&quot;: *&quot;v*\([^&quot;]*\)&quot;.*/\1/p')
+: &quot;${VERSION:?could not resolve the latest release}&quot;
+
+ASSET=&quot;neubird_${VERSION}_darwin_arm64.tar.gz&quot;   # pick your row from the table
+curl -fLO &quot;https://github.com/neubirdai/neubird-terminal/releases/download/v${VERSION}/${ASSET}&quot;
+tar -xzf &quot;$ASSET&quot;
+sudo mv neubird /usr/local/bin/
+</code></pre>
+<p>On Windows, expand the <code>.zip</code> and put <code>neubird.exe</code> on your PATH:</p>
+<pre><code class="language-powershell">$tag = (Invoke-RestMethod &quot;https://api.github.com/repos/neubirdai/neubird-terminal/releases/latest&quot;).tag_name
+$version = $tag.TrimStart(&quot;v&quot;)
+# amd64 on standard PCs, arm64 on Snapdragon / Copilot+ PCs (native and 32-bit shells report ARM64 machines correctly; an x64-emulated shell gets amd64, which still runs)
+$arch = if ($env:PROCESSOR_ARCHITECTURE -eq &quot;ARM64&quot; -or $env:PROCESSOR_ARCHITEW6432 -eq &quot;ARM64&quot;) { &quot;arm64&quot; } else { &quot;amd64&quot; }
+Invoke-WebRequest -Uri &quot;https://github.com/neubirdai/neubird-terminal/releases/download/$tag/neubird_${version}_windows_${arch}.zip&quot; -OutFile neubird.zip
+Expand-Archive neubird.zip -DestinationPath &quot;$env:LOCALAPPDATA\NeuBird&quot;
+
+# Current session only
+$env:Path += &quot;;$env:LOCALAPPDATA\NeuBird&quot;
+
+# Persist for future sessions
+[Environment]::SetEnvironmentVariable(&quot;Path&quot;, &quot;$([Environment]::GetEnvironmentVariable('Path','User'));$env:LOCALAPPDATA\NeuBird&quot;, &quot;User&quot;)
 </code></pre>
 <hr />
 <h2 id="verify-installation">Verify installation</h2>

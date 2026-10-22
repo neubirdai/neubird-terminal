@@ -671,10 +671,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#when-opus-runs" class="md-nav__link">
+  <a href="#when-the-synthesis-pass-runs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        When Opus Runs
+        When the Synthesis Pass Runs
       
     </span>
   </a>
@@ -1615,10 +1615,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#when-opus-runs" class="md-nav__link">
+  <a href="#when-the-synthesis-pass-runs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        When Opus Runs
+        When the Synthesis Pass Runs
       
     </span>
   </a>
@@ -1767,7 +1767,7 @@
 <p><strong>Persistent learning</strong> — NeuBird remembers which queries work with your data sources and which telemetry tables matter for each type of investigation. It gets faster and more accurate over time.</p>
 <p><strong>Custom slash commands</strong> — Drop a <code>.md</code> file into the <code>skills/</code> directory to create custom investigation templates. The filename becomes the command, and the content becomes the prompt.</p>
 <p><strong>Export and share</strong> — Use <code>/export</code> to save any investigation as a file or copy it to your clipboard. An interactive picker lets you choose format (plain text, markdown, or PDF) and scope (last answer or full conversation). Or go direct: <code>/export pdf</code>, <code>/export full md</code>, <code>/export clipboard</code>. PDF exports include the NeuBird logo, formatted tables, and proper section headings. Use <code>/copy</code> as a shortcut to copy the last answer to your clipboard instantly.</p>
-<p><strong>Branded PDF reports</strong> — RCA investigations, health sweeps, and cost analyses automatically generate branded PDF reports saved to <code>~/.config/neubird/reports/</code>. Each report includes the NeuBird logo, confidence score, data sources, investigation timeline, and structured findings with evidence tables and action items.</p>
+<p><strong>Branded PDF reports</strong> — RCA investigations, health sweeps, and cost analyses automatically generate branded PDF reports saved to <code>~/.config/neubird/reports/</code>. Each report includes the NeuBird logo, data sources, investigation timeline, and structured findings with evidence tables and action items.</p>
 <p><strong>Live investigation dashboard</strong> — While an investigation runs, three progress bars update in real time:</p>
 <pre><code class="language-text">  ██████████████████████████████████░░░░░░ 85% wrapping up · turn 15 · 22 tools • 52.3s
   ████████████████████░░░░░░░░░░░░░░░░░░░░ 50% confidence
@@ -1866,17 +1866,33 @@
 <pre><code class="language-bash">sudo snap install neubird-terminal
 </code></pre>
 <h3 id="linux-debian-ubuntu">Linux (Debian / Ubuntu)</h3>
-<pre><code class="language-bash">curl -LO https://github.com/neubirdai/neubird-terminal/releases/latest/download/neubird_linux_amd64.deb
-sudo dpkg -i neubird_linux_amd64.deb
+<pre><code class="language-bash"># Release assets are version-stamped, so resolve the current version first.
+VERSION=$(curl -fsSL https://api.github.com/repos/neubirdai/neubird-terminal/releases/latest \
+  | sed -n 's/.*&quot;tag_name&quot;: *&quot;v*\([^&quot;]*\)&quot;.*/\1/p')
+: &quot;${VERSION:?could not resolve the latest release; check https://github.com/neubirdai/neubird-terminal/releases}&quot;
+
+curl -fLO &quot;https://github.com/neubirdai/neubird-terminal/releases/download/v${VERSION}/neubird_${VERSION}_linux_amd64.deb&quot;
+sudo dpkg -i &quot;neubird_${VERSION}_linux_amd64.deb&quot;
 </code></pre>
+<p>Replace <code>amd64</code> with <code>arm64</code> on 64-bit ARM.</p>
 <h3 id="linux-fedora-rhel">Linux (Fedora / RHEL)</h3>
-<pre><code class="language-bash">curl -LO https://github.com/neubirdai/neubird-terminal/releases/latest/download/neubird_linux_amd64.rpm
-sudo rpm -i neubird_linux_amd64.rpm
+<pre><code class="language-bash"># Release assets are version-stamped, so resolve the current version first.
+VERSION=$(curl -fsSL https://api.github.com/repos/neubirdai/neubird-terminal/releases/latest \
+  | sed -n 's/.*&quot;tag_name&quot;: *&quot;v*\([^&quot;]*\)&quot;.*/\1/p')
+: &quot;${VERSION:?could not resolve the latest release; check https://github.com/neubirdai/neubird-terminal/releases}&quot;
+
+curl -fLO &quot;https://github.com/neubirdai/neubird-terminal/releases/download/v${VERSION}/neubird_${VERSION}_linux_amd64.rpm&quot;
+sudo rpm -i &quot;neubird_${VERSION}_linux_amd64.rpm&quot;
 </code></pre>
+<p>Replace <code>amd64</code> with <code>arm64</code> on 64-bit ARM.</p>
 <h3 id="windows">Windows</h3>
-<p>Download <code>neubird_windows_amd64.zip</code> from the <a href="https://github.com/neubirdai/neubird-terminal/releases/latest">latest release</a>, extract it, and add the folder to your <code>PATH</code>:</p>
+<p>Download the Windows <code>.zip</code> from the <a href="https://github.com/neubirdai/neubird-terminal/releases/latest">latest release</a>, extract it, and add the folder to your <code>PATH</code>:</p>
 <pre><code class="language-powershell"># PowerShell — download and extract
-Invoke-WebRequest -Uri &quot;https://github.com/neubirdai/neubird-terminal/releases/latest/download/neubird_windows_amd64.zip&quot; -OutFile neubird.zip
+$tag = (Invoke-RestMethod &quot;https://api.github.com/repos/neubirdai/neubird-terminal/releases/latest&quot;).tag_name
+$version = $tag.TrimStart(&quot;v&quot;)
+# amd64 on standard PCs, arm64 on Snapdragon / Copilot+ PCs (native and 32-bit shells report ARM64 machines correctly; an x64-emulated shell gets amd64, which still runs)
+$arch = if ($env:PROCESSOR_ARCHITECTURE -eq &quot;ARM64&quot; -or $env:PROCESSOR_ARCHITEW6432 -eq &quot;ARM64&quot;) { &quot;arm64&quot; } else { &quot;amd64&quot; }
+Invoke-WebRequest -Uri &quot;https://github.com/neubirdai/neubird-terminal/releases/download/$tag/neubird_${version}_windows_${arch}.zip&quot; -OutFile neubird.zip
 Expand-Archive neubird.zip -DestinationPath &quot;$env:LOCALAPPDATA\neubird&quot;
 
 # Add to PATH (current session)
@@ -2079,7 +2095,7 @@ neubird --assess
 <p><strong>And more</strong> — Jira, Confluence, Slack, Kubernetes, custom FDW plugins</p>
 <p><strong>Local CLI tools</strong> (auto-detected on your machine) — kubectl, helm, docker/podman, AWS CLI, gcloud, Azure CLI, git, terraform, curl, dig, openssl</p>
 <h2 id="server-api">Server API</h2>
-<p>When running in server mode (<code>neubird serve</code>), NeuBird Terminal exposes a REST API for programmatic access:</p>
+<p>When running in server mode (<code>neubird --server</code>, or <code>neubird --with-server</code> alongside the TUI), NeuBird Terminal exposes a REST API for programmatic access:</p>
 <table>
 <thead>
 <tr>
@@ -2095,9 +2111,29 @@ neubird --assess
 <td>Server health check</td>
 </tr>
 <tr>
+<td><code>GET</code></td>
+<td><code>/metrics</code></td>
+<td>Prometheus metrics</td>
+</tr>
+<tr>
 <td><code>POST</code></td>
 <td><code>/v1/infer</code></td>
 <td>Run an investigation (SSE streaming)</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/v1/infer/cancel</code></td>
+<td>Cancel a running investigation</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/infer/status</code></td>
+<td>Status of running investigations</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/infer/stream</code></td>
+<td>Re-attach to a running investigation's stream</td>
 </tr>
 <tr>
 <td><code>GET</code></td>
@@ -2151,6 +2187,7 @@ neubird --assess
 </tr>
 </tbody>
 </table>
+<p>All routes except <code>/health</code> sit behind <code>X-Desktop-Secret</code> auth when a desktop secret is configured (the server is open when run by hand with no secret). For the engine internals — agent loop, tool system, context management, personas — see <a href="architecture/">docs/architecture.md</a>; for how NeuBird learns and remembers, see <a href="MEMORY_SYSTEM/">docs/MEMORY_SYSTEM.md</a>.</p>
 <h3 id="async-prompt-queue">Async Prompt Queue</h3>
 <p>Prompts can be submitted to a Redis-backed queue instead of the synchronous <code>/v1/infer</code> endpoint. Any agent pod with access to the same Redis picks up the prompt and processes it. This enables horizontal scaling — add more pods to process more prompts in parallel.</p>
 <pre><code class="language-bash"># Submit a prompt
@@ -2161,7 +2198,7 @@ curl -X POST http://localhost:8080/v1/prompt/submit \
 # Response: {&quot;prompt_id&quot;: &quot;a1b2c3d4-...&quot;}
 </code></pre>
 <p>The request body accepts the same fields as <code>/v1/infer</code>. If <code>prompt_id</code> is omitted, one is generated automatically.</p>
-<p><strong>Reading results</strong> — The agent streams output to Redis at <code>&lt;org&gt;:response:&lt;prompt_id&gt;</code>. Poll the status key <code>&lt;org&gt;:response:&lt;prompt_id&gt;:status</code> for the current state:</p>
+<p><strong>Reading results</strong> — The agent streams output to Redis at <code>&lt;org&gt;:response:&lt;prompt_id&gt;</code>. (A synchronous <code>/v1/infer</code> called with <code>"stream_to_redis": true</code> writes the same key, holding the UI stream as raven relays it — see <a href="https://github.com/neubirdai/falcon/blob/main/docs/api/infer-endpoint.md">docs/api/infer-endpoint.md</a>.) Poll the status key <code>&lt;org&gt;:response:&lt;prompt_id&gt;:status</code> for the current state:</p>
 <table>
 <thead>
 <tr>
@@ -2198,7 +2235,7 @@ curl -X POST http://localhost:8080/v1/prompt/submit \
 <tr>
 <td><code>REDIS_URI</code></td>
 <td>Redis connection string</td>
-<td><code>redis://redis-master.platform.svc.cluster.local:6379</code></td>
+<td><code>redis://127.0.0.1:6379</code></td>
 </tr>
 <tr>
 <td><code>ORG_NAME</code></td>
@@ -2213,12 +2250,27 @@ curl -X POST http://localhost:8080/v1/prompt/submit \
 <tr>
 <td><code>PROMPT_QUEUE_AUTOCLAIM_IDLE</code></td>
 <td>Idle time before a stalled prompt is reclaimed</td>
-<td><code>12m</code></td>
+<td><code>25m</code></td>
 </tr>
 <tr>
 <td><code>PROMPT_QUEUE_MAX_RETRIES</code></td>
 <td>Max delivery attempts before dead-letter</td>
 <td><code>3</code></td>
+</tr>
+<tr>
+<td><code>PROMPT_QUEUE_RETENTION</code></td>
+<td>How long processed queue and dead-letter entries are kept; trimmed on every enqueue and hourly</td>
+<td><code>168h</code></td>
+</tr>
+<tr>
+<td><code>PROMPT_QUEUE_TRIM_INTERVAL</code></td>
+<td>How often the consumer trims history and prunes idle consumers</td>
+<td><code>1h</code></td>
+</tr>
+<tr>
+<td><code>PROMPT_QUEUE_CONSUMER_TTL</code></td>
+<td>Idle time before a consumer with nothing pending is removed from the group</td>
+<td><code>168h</code></td>
 </tr>
 </tbody>
 </table>
@@ -2360,7 +2412,7 @@ curl -X POST http://localhost:8080/v1/sentinel/stop
 <td>—</td>
 <td>—</td>
 <td>Updates status spinner</td>
-<td>Signal that Opus senior review is starting</td>
+<td>Signal that the synthesis pass is starting</td>
 </tr>
 <tr>
 <td><code>summary_text</code></td>
@@ -2379,7 +2431,7 @@ curl -X POST http://localhost:8080/v1/sentinel/stop
 </tbody>
 </table>
 <h3 id="investigation-flow">Investigation Flow</h3>
-<p>Every investigation follows this sequence. Opus synthesis only runs when specific conditions are met (see <a href="#when-opus-runs">When Opus Runs</a> below).</p>
+<p>Every investigation follows this sequence. The synthesis pass runs unless the agent disabled it or no sources were gathered (see <a href="#when-the-synthesis-pass-runs">When the Synthesis Pass Runs</a> below).</p>
 <pre><code>User question
   │
   ▼
@@ -2413,23 +2465,24 @@ curl -X POST http://localhost:8080/v1/sentinel/stop
 │                                                                 │
 │  Sonnet's last text was already streamed during the loop.       │
 │  This phase marker tells clients the investigation is complete  │
-│  and any future chunks are synthesis.                           │
+│  and any future chunks are the report.                          │
 └─────────────┬───────────────────────────────────────────────────┘
               │
               ▼
-        ┌─────────────┐
-        │ Opus needed? │──── No ──── skip to completion
-        └──────┬──────┘
-               │ Yes
-               ▼
+        ┌──────────────────┐
+        │ Synthesis pass?  │──── No ──── skip to completion
+        └────────┬─────────┘
+                 │ Yes
+                 ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  Phase: synthesizing  (Opus senior review)                      │
+│  Phase: synthesizing                                            │
 │                                                                 │
 │  Events: phase(&quot;synthesizing&quot;), health_report (health only),    │
-│          chunk (Opus text), rca_saved                            │
+│          chunk (report text), rca_saved                          │
 │                                                                 │
-│  Opus reviews ALL evidence from the Sonnet loop and produces    │
-│  a rigorous synthesis: RCA, health assessment, or cost analysis.│
+│  Report pass: one more turn on the run's own model and system   │
+│  prompt, reading the prefix the loop just cached. Health/cost   │
+│  instead hand off to Opus for a senior review.                  │
 │  Text streams as chunk events — the user reads it live.         │
 │  A PDF/markdown report is saved automatically.                  │
 └─────────────┬───────────────────────────────────────────────────┘
@@ -2445,15 +2498,15 @@ curl -X POST http://localhost:8080/v1/sentinel/stop
 │  Server: [DONE] SSE sentinel                                    │
 └─────────────────────────────────────────────────────────────────┘
 </code></pre>
-<h3 id="when-opus-runs">When Opus Runs</h3>
-<p>Opus synthesis requires <strong>both</strong> conditions to be true. If either fails, Sonnet's answer stands alone — no Opus pass.</p>
+<h3 id="when-the-synthesis-pass-runs">When the Synthesis Pass Runs</h3>
+<p>Every investigation ends in a synthesis pass unless the agent sets <code>disable_synthesis</code> or the run gathered no sources at all. The question's wording no longer decides <em>whether</em> a pass runs — only <em>which</em> of the three flavors it gets.</p>
 <table>
 <thead>
 <tr>
 <th>Investigation Type</th>
 <th>Question Detection</th>
 <th>Minimum Sources</th>
-<th>Opus Function</th>
+<th>Function</th>
 </tr>
 </thead>
 <tbody>
@@ -2461,35 +2514,34 @@ curl -X POST http://localhost:8080/v1/sentinel/stop
 <td><strong>Health</strong></td>
 <td>Question starts with <code>"Run a rapid infrastructure health assessment."</code> (generated by <code>/health</code> slash command)</td>
 <td>≥ 3</td>
-<td><code>runHealthSynthesis</code> — senior SRE review of Good/Bad/Ugly findings</td>
+<td><code>runHealthSynthesis</code> — Opus senior SRE review of Good/Bad/Ugly findings</td>
 </tr>
 <tr>
 <td><strong>Cost</strong></td>
 <td>Question starts with the cost analysis prefix (generated by <code>/cost</code> slash command)</td>
 <td>≥ 2</td>
-<td><code>runCostSynthesis</code> — cost trend extrapolation and ROI-ranked cuts</td>
+<td><code>runCostSynthesis</code> — Opus cost trend extrapolation and ROI-ranked cuts</td>
 </tr>
 <tr>
-<td><strong>RCA</strong></td>
-<td>Question contains trigger keywords (see below)</td>
-<td>≥ 3</td>
-<td><code>runSynthesis</code> — rigorous root cause analysis with evidence chain</td>
+<td><strong>Report pass</strong></td>
+<td>Everything else</td>
+<td>≥ 1</td>
+<td><code>runSynthesis</code> — the final report, written by the run's own model</td>
 </tr>
 <tr>
-<td><strong>General</strong></td>
-<td>None of the above, or 0 sources queried</td>
+<td><strong>No pass</strong></td>
+<td><code>disable_synthesis: true</code>, or 0 sources queried</td>
 <td>—</td>
-<td><strong>No Opus</strong> — Sonnet's answer is the final output</td>
+<td>The loop's own last message is the final output</td>
 </tr>
 </tbody>
 </table>
-<p><strong>RCA trigger keywords</strong> — if any of these appear anywhere in the user's question (case-insensitive), the question is eligible for Opus RCA synthesis:</p>
-<p><code>root cause</code>, <code>rca</code>, <code>investigate</code>, <code>incident</code>, <code>what caused</code>, <code>what happened</code>, <code>why is</code>, <code>why are</code>, <code>why did</code>, <code>find the cause</code>, <code>diagnose</code>, <code>postmortem</code>, <code>post-mortem</code>, <code>find out why</code>, <code>long running</code>, <code>slow quer</code>, <code>slow job</code>, <code>performance</code>, <code>jobs</code>, <code>blocking</code>, <code>locks</code>, <code>deadlock</code>, <code>timeout</code></p>
-<p><strong>Common reasons Opus doesn't run:</strong></p>
+<p><strong>The report pass</strong> is one extra turn appended to the investigation the loop just finished. It runs on the run's own model and its own system prompt — not on a separate Opus agent — so the request rebuilds the identical tools → system → messages prefix the loop's last turn wrote to the prompt cache. The whole investigation comes back as cached input and only the appended instruction turn is billed fresh, which is what makes it affordable to run every time.</p>
+<p>Everything the pass needs to be told therefore rides in that appended user turn rather than in a system prompt: the output format, the citation contract, any tool-access gaps, and open claim challenges. Editing the system prompt or the tools array for the pass would drop the cache and cost more than the pass saves.</p>
+<p><strong>Output format</strong> is owned by skills, so it is customer-configurable end to end:</p>
 <ul>
-<li>The question doesn't match any trigger keyword — e.g. "Show me trace latencies" won't trigger Opus even with 10 sources, because none of the RCA keywords are present. Rephrasing as "Investigate the trace latency slowdown" would trigger it.</li>
-<li>Claude answered from conversation context or knowledge without making any tool calls (0 sources).</li>
-<li>The investigation only queried 1-2 data sources — not enough evidence for a meaningful synthesis.</li>
+<li>If the project has <code>SKILL_TYPE_SUMMARY</code> skills, they own the format and compose with each other.</li>
+<li>Otherwise the built-in <code>final-report</code> skill supplies the default. Because it is an ordinary skill in <code>skills/</code>, a deployment can replace the whole default format by dropping a same-named skill into <code>HAWKEYE_SKILLS_DIR</code>.</li>
 </ul>
 <h3 id="stream-retry-on-transient-errors">Stream Retry on Transient Errors</h3>
 <p>When the Anthropic API drops the connection mid-stream (HTTP/2 reset, <code>INTERNAL_ERROR</code>, TCP reset), the agent retries the current LLM call automatically. The conversation history is intact — the failed partial response was never appended — so Claude regenerates from the same state.</p>

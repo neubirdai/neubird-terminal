@@ -1,0 +1,608 @@
+<title>Checkpoint Dataflow</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --ground: #f3f6f7;
+    --surface: #ffffff;
+    --surface-sunk: #e9eef0;
+    --rule: #cdd8db;
+    --rule-soft: #e1e9eb;
+    --ink: #151b1d;
+    --ink-soft: #4a585c;
+    --ink-faint: #76858a;
+    --new: #0b6e6e;
+    --new-wash: #e2f0ef;
+    --old: #8a5a00;
+    --old-wash: #f6eedd;
+    --fail: #a62626;
+    --fail-wash: #f8e8e6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #13171a;
+      --surface: #1a2024;
+      --surface-sunk: #232b30;
+      --rule: #37434a;
+      --rule-soft: #283136;
+      --ink: #e6ecee;
+      --ink-soft: #a9b7bc;
+      --ink-faint: #7f8f95;
+      --new: #4fb3ad;
+      --new-wash: #13302f;
+      --old: #d4a24a;
+      --old-wash: #2e2616;
+      --fail: #e8827c;
+      --fail-wash: #33201f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #13171a;
+    --surface: #1a2024;
+    --surface-sunk: #232b30;
+    --rule: #37434a;
+    --rule-soft: #283136;
+    --ink: #e6ecee;
+    --ink-soft: #a9b7bc;
+    --ink-faint: #7f8f95;
+    --new: #4fb3ad;
+    --new-wash: #13302f;
+    --old: #d4a24a;
+    --old-wash: #2e2616;
+    --fail: #e8827c;
+    --fail-wash: #33201f;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 56px 28px 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 44px;
+  }
+  .measure { max-width: 66ch; }
+
+  h1, h2, h3 {
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-weight: 600;
+    text-wrap: balance;
+    margin: 0;
+    letter-spacing: -0.015em;
+  }
+  h1 { font-size: 2.1rem; line-height: 1.15; }
+  h2 { font-size: 1.35rem; line-height: 1.25; }
+  h3 { font-size: 1.02rem; }
+  p { margin: 0; }
+  .lede { font-size: 1.1rem; color: var(--ink-soft); }
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  code, .mono {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.88em;
+  }
+  code { background: var(--surface-sunk); padding: 0.08em 0.34em; border-radius: 3px; }
+  a { color: var(--new); }
+
+  header { display: flex; flex-direction: column; gap: 14px; }
+  .meta {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    padding-top: 6px;
+    border-top: 1px solid var(--rule);
+  }
+
+  section { display: flex; flex-direction: column; gap: 16px; }
+  section > p { max-width: 66ch; }
+
+  figure {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 20px 20px 16px;
+  }
+  .scroller { overflow-x: auto; }
+  figure svg { display: block; max-width: 100%; height: auto; min-width: 640px; color: var(--ink); }
+  figcaption {
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: var(--ink-soft);
+    max-width: 72ch;
+  }
+  .svg-box { fill: var(--surface); stroke: var(--rule); }
+  .svg-sunk { fill: var(--surface-sunk); stroke: var(--rule); }
+  .svg-label { font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 12.5px; fill: var(--ink); }
+  .svg-label-b { font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 12.5px; font-weight: 600; fill: var(--ink); }
+  .svg-mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11.5px; fill: var(--ink-soft); }
+  .svg-lane { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10.5px; font-weight: 600; letter-spacing: 0.1em; fill: var(--ink-faint); }
+  .svg-edge { stroke: var(--ink-soft); stroke-width: 1.4; fill: none; }
+  .svg-edge-new { stroke: var(--new); stroke-width: 1.8; fill: none; }
+  .svg-edge-old { stroke: var(--old); stroke-width: 1.8; fill: none; }
+  .svg-edge-fail { stroke: var(--fail); stroke-width: 1.6; fill: none; stroke-dasharray: 5 4; }
+  .svg-rule { stroke: var(--rule-soft); stroke-width: 1; }
+
+  table { border-collapse: collapse; width: 100%; font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+  th {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 600;
+    border-bottom: 1px solid var(--rule);
+  }
+  td:first-child { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.82rem; white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: none; }
+  .num { font-variant-numeric: tabular-nums; }
+  .tag {
+    display: inline-block;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    padding: 2px 7px;
+    border-radius: 2px;
+  }
+  .tag-new { background: var(--new-wash); color: var(--new); }
+  .tag-old { background: var(--old-wash); color: var(--old); }
+  .tag-fail { background: var(--fail-wash); color: var(--fail); }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(255px, 1fr)); gap: 14px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 2px solid var(--rule);
+    border-radius: 2px;
+    padding: 15px 17px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .card.is-new { border-left-color: var(--new); }
+  .card.is-old { border-left-color: var(--old); }
+  .card h3 { font-size: 0.95rem; }
+  .card p { font-size: 0.92rem; line-height: 1.5; color: var(--ink-soft); }
+  .frames {
+    background: var(--surface-sunk);
+    border: 1px solid var(--rule-soft);
+    border-radius: 2px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.78rem;
+    line-height: 1.75;
+    color: var(--ink-soft);
+    white-space: pre;
+  }
+  .frames b { color: var(--ink); font-weight: 600; }
+  ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 7px; }
+  li { max-width: 64ch; }
+  hr { border: none; border-top: 1px solid var(--rule); margin: 0; }
+  :focus-visible { outline: 2px solid var(--new); outline-offset: 2px; }
+  @media (prefers-reduced-motion: no-preference) { a { transition: color 120ms ease; } }
+
+  @media print {
+    /* Print in the light palette regardless of the viewer's theme, and let the
+       figures scale to the page instead of scrolling. */
+    :root {
+      --ground: #ffffff;
+      --surface: #ffffff;
+      --surface-sunk: #f2f5f6;
+      --rule: #b9c6ca;
+      --rule-soft: #d8e2e4;
+      --ink: #121719;
+      --ink-soft: #3f4c50;
+      --ink-faint: #67767b;
+      --new: #0a5f5f;
+      --new-wash: #eaf4f3;
+      --old: #7a4f00;
+      --old-wash: #f8f2e4;
+      --fail: #94201f;
+      --fail-wash: #faece9;
+    }
+    @page { size: A4 portrait; margin: 14mm 12mm; }
+    body { background: #fff; font-size: 10.5pt; }
+    .wrap { max-width: none; padding: 0; gap: 26px; }
+    h1 { font-size: 20pt; }
+    h2 { font-size: 13pt; }
+    figure, table, .cards, .frames { break-inside: avoid; page-break-inside: avoid; }
+    section { break-inside: auto; }
+    section > h2 { break-after: avoid; }
+    .scroller { overflow: visible; }
+    figure svg { min-width: 0; width: 100%; }
+    figure { padding: 12px 12px 8px; }
+    .meta { color: #67767b; }
+    a { color: #0a5f5f; text-decoration: none; }
+    .frames { font-size: 7.6pt; white-space: pre-wrap; word-break: break-word; }
+  }
+
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">falcon · internal/ai · PR #1704</p>
+    <h1>Checkpoint dataflow, before and after</h1>
+    <p class="lede measure">The long-run progress checkpoint used to be prose the harness parsed. It is now a tool call the harness renders. Same SSE contract on the wire — one emitter instead of three, and nothing written to the transcript to repair.</p>
+    <p class="meta"><span>trigger: every 3 min of an interactive run</span><span>net −292 lines</span><span>wire contract: unchanged</span></p>
+  </header>
+
+  <section>
+    <p class="eyebrow">01 · before</p>
+    <h2>Prose, parsed out of the token stream</h2>
+    <p class="measure">The harness wrote a note <em>into the session</em>, streamed the banner immediately, and then hoped the model would open its reply with a reserved <code>&lt;tldr&gt;</code> line and two headed sections. Three separate things emitted to the client, and a stream filter stood between the model and the transcript.</p>
+
+    <figure>
+      <div class="scroller">
+        <svg viewBox="0 0 880 560" role="img" aria-label="Before: the harness appends a note to session history and streams the banner immediately; the model's reply is parsed by a stream filter which emits the checkpoint event only if a tldr span is present; a reply with no text block emits nothing, leaving the banner alone; cancel and deadline paths need a repair pass to remove the unanswered note.">
+          <defs>
+            <marker id="a-old" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--old)"/>
+            </marker>
+            <marker id="a-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ink-soft)"/>
+            </marker>
+            <marker id="a-fail" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--fail)"/>
+            </marker>
+          </defs>
+
+          <!-- column rails -->
+          <line class="svg-rule" x1="300" y1="40" x2="300" y2="478"/>
+          <line class="svg-rule" x1="592" y1="40" x2="592" y2="478"/>
+          <text class="svg-lane" x="24" y="30">HARNESS · TURN HEAD</text>
+          <text class="svg-lane" x="316" y="30">MODEL REQUEST / REPLY</text>
+          <text class="svg-lane" x="608" y="30">CLIENT · SSE</text>
+
+          <!-- 1 interval due -->
+          <rect class="svg-box" x="24" y="48" width="252" height="52" rx="2"/>
+          <text class="svg-label-b" x="38" y="70">1 · interval elapsed</text>
+          <text class="svg-mono" x="38" y="88">maybeInjectInteractiveCheckpoint</text>
+
+          <!-- banner straight to client -->
+          <path class="svg-edge-old" d="M 276 74 L 540 74 L 540 112 L 616 112" marker-end="url(#a-old)"/>
+          <text class="svg-mono" x="330" y="66" fill="var(--old)">cb.OnText(banner) — before any content exists</text>
+          <rect x="616" y="90" width="236" height="44" rx="2" fill="var(--old-wash)" stroke="var(--old)"/>
+          <text class="svg-label-b" x="630" y="110" fill="var(--old)">banner chunk</text>
+          <text class="svg-mono" x="630" y="126" fill="var(--old)">“turning into a longer…”</text>
+
+          <!-- 2 note into history -->
+          <path class="svg-edge-old" d="M 150 100 L 150 152" marker-end="url(#a-old)"/>
+          <rect x="24" y="152" width="252" height="58" rx="2" fill="var(--old-wash)" stroke="var(--old)"/>
+          <text class="svg-label-b" x="38" y="174" fill="var(--old)">2 · note written to history</text>
+          <text class="svg-mono" x="38" y="192" fill="var(--old)">appendTextToLastUserMessage</text>
+          <text class="svg-mono" x="38" y="205" fill="var(--old)">session.Messages — persisted</text>
+
+          <!-- request -->
+          <path class="svg-edge" d="M 276 181 L 324 181" marker-end="url(#a-ink)"/>
+          <rect class="svg-sunk" x="324" y="152" width="246" height="58" rx="2"/>
+          <text class="svg-label-b" x="338" y="174">3 · request replays the note</text>
+          <text class="svg-mono" x="338" y="192">…and replays it on every</text>
+          <text class="svg-mono" x="338" y="205">later turn of the run</text>
+
+          <!-- model reply fork -->
+          <path class="svg-edge" d="M 447 210 L 447 246" marker-end="url(#a-ink)"/>
+          <rect class="svg-box" x="324" y="246" width="246" height="46" rx="2"/>
+          <text class="svg-label-b" x="338" y="268">4 · model reply</text>
+          <text class="svg-mono" x="338" y="284">two shapes, in practice</text>
+
+          <!-- complies -->
+          <path class="svg-edge" d="M 380 292 L 380 328" marker-end="url(#a-ink)"/>
+          <rect class="svg-box" x="300" y="328" width="270" height="52" rx="2"/>
+          <text class="svg-label" x="314" y="348">text: &lt;tldr&gt;…&lt;/tldr&gt; + block</text>
+          <text class="svg-mono" x="314" y="366">dellmirror: 2 of 2 runs</text>
+
+          <path class="svg-edge-old" d="M 570 354 L 616 354" marker-end="url(#a-old)"/>
+          <rect x="616" y="300" width="236" height="108" rx="2" fill="var(--old-wash)" stroke="var(--old)"/>
+          <text class="svg-label-b" x="630" y="320" fill="var(--old)">stream filter splits it</text>
+          <text class="svg-mono" x="630" y="340" fill="var(--old)">&lt;tldr&gt; span → checkpoint</text>
+          <text class="svg-mono" x="630" y="356" fill="var(--old)">rest of text → chunks</text>
+          <text class="svg-mono" x="630" y="376" fill="var(--old)">then stripCheckpointTLDR</text>
+          <text class="svg-mono" x="630" y="392" fill="var(--old)">takes the span back out</text>
+
+          <!-- ignores -->
+          <path class="svg-edge-fail" d="M 505 292 L 505 418" marker-end="url(#a-fail)"/>
+          <rect x="324" y="418" width="246" height="52" rx="2" fill="var(--fail-wash)" stroke="var(--fail)"/>
+          <text class="svg-label" x="338" y="438" fill="var(--fail)">thinking + tool_use, no text</text>
+          <text class="svg-mono" x="338" y="456" fill="var(--fail)">copeyemg: 20 of 20 turns</text>
+
+          <path class="svg-edge-fail" d="M 570 444 L 616 444" marker-end="url(#a-fail)"/>
+          <rect x="616" y="420" width="236" height="48" rx="2" fill="var(--fail-wash)" stroke="var(--fail)"/>
+          <text class="svg-label-b" x="630" y="440" fill="var(--fail)">no event at all</text>
+          <text class="svg-mono" x="630" y="457" fill="var(--fail)">banner above stands alone</text>
+
+          <!-- repairs -->
+          <line class="svg-rule" x1="24" y1="492" x2="852" y2="492"/>
+          <text class="svg-lane" x="24" y="512">ON CANCEL · DEADLINE · COST CAP</text>
+          <text class="svg-mono" x="300" y="512" fill="var(--fail)">dropUnansweredCheckpointNote() — walks the message, strips the note,</text>
+          <text class="svg-mono" x="300" y="528" fill="var(--fail)">or the report-pass trigger is appended on top of an unanswered ask</text>
+        </svg>
+      </div>
+      <figcaption>Three emitters: the banner (harness, before the reply), the status event (stream filter, only if the model wrote the reserved span), and the block (the model's own text). The note is persisted, so every bail-out path needs a repair pass — and when the model writes no text block, the banner has already gone out alone.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <p class="eyebrow">02 · after</p>
+    <h2>A tool call, rendered by the handler</h2>
+    <p class="measure">The note goes on the outgoing request only. The model answers with a <code>report_checkpoint</code> call — which it does even on the turns where it writes no prose at all — and the handler is the single place anything reaches the client.</p>
+
+    <figure>
+      <div class="scroller">
+        <svg viewBox="0 0 880 560" role="img" aria-label="After: the harness sets a pending note that messagesForAPI applies to the outgoing projection only, leaving session history untouched; the model replies with a report_checkpoint tool call; the handler is the only emitter, sending the checkpoint event and the banner and block chunks, and returning a tool result telling the model to continue; a run that ends mid-ask clears a flag with nothing to repair.">
+          <defs>
+            <marker id="b-new" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--new)"/>
+            </marker>
+            <marker id="b-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ink-soft)"/>
+            </marker>
+            <marker id="b-faint" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ink-faint)"/>
+            </marker>
+          </defs>
+
+          <line class="svg-rule" x1="300" y1="40" x2="300" y2="478"/>
+          <line class="svg-rule" x1="592" y1="40" x2="592" y2="478"/>
+          <text class="svg-lane" x="24" y="30">HARNESS · TURN HEAD</text>
+          <text class="svg-lane" x="316" y="30">MODEL REQUEST / REPLY</text>
+          <text class="svg-lane" x="608" y="30">CLIENT · SSE</text>
+
+          <!-- 1 -->
+          <rect class="svg-box" x="24" y="48" width="252" height="52" rx="2"/>
+          <text class="svg-label-b" x="38" y="70">1 · interval elapsed, gates pass</text>
+          <text class="svg-mono" x="38" y="88">maybeAskForCheckpoint</text>
+
+          <!-- 2 pending flag -->
+          <path class="svg-edge" d="M 150 100 L 150 142" marker-end="url(#b-ink)"/>
+          <rect x="24" y="142" width="252" height="58" rx="2" fill="var(--new-wash)" stroke="var(--new)"/>
+          <text class="svg-label-b" x="38" y="164" fill="var(--new)">2 · pendingCheckpointNote</text>
+          <text class="svg-mono" x="38" y="182" fill="var(--new)">one string on runState</text>
+          <text class="svg-mono" x="38" y="195" fill="var(--new)">session.Messages untouched</text>
+
+          <!-- nothing yet to client -->
+          <text class="svg-mono" x="616" y="170" fill="var(--ink-faint)">— nothing emitted yet —</text>
+          <text class="svg-mono" x="616" y="186" fill="var(--ink-faint)">no banner before content</text>
+
+          <!-- 3 projection -->
+          <path class="svg-edge" d="M 276 171 L 324 171" marker-end="url(#b-ink)"/>
+          <rect class="svg-sunk" x="324" y="142" width="246" height="58" rx="2"/>
+          <text class="svg-label-b" x="338" y="164">3 · messagesForAPI</text>
+          <text class="svg-mono" x="338" y="182">applyPendingCheckpointNote</text>
+          <text class="svg-mono" x="338" y="195">copies the tail — wire only</text>
+
+          <!-- 4 reply -->
+          <path class="svg-edge" d="M 447 200 L 447 238" marker-end="url(#b-ink)"/>
+          <rect class="svg-box" x="324" y="238" width="246" height="66" rx="2"/>
+          <text class="svg-label-b" x="338" y="260">4 · reply: tool_use</text>
+          <text class="svg-mono" x="338" y="278">report_checkpoint, first call,</text>
+          <text class="svg-mono" x="338" y="294">alongside its next tools</text>
+
+          <!-- 5 handler -->
+          <path class="svg-edge-new" d="M 447 304 L 447 338" marker-end="url(#b-new)"/>
+          <rect x="300" y="338" width="270" height="74" rx="2" fill="var(--new-wash)" stroke="var(--new)"/>
+          <text class="svg-label-b" x="314" y="360" fill="var(--new)">5 · executeReportCheckpoint</text>
+          <text class="svg-mono" x="314" y="378" fill="var(--new)">the only emitter in the system</text>
+          <text class="svg-mono" x="314" y="394" fill="var(--new)">tldr · established · still_checking</text>
+
+          <!-- emissions -->
+          <path class="svg-edge-new" d="M 570 364 L 616 364" marker-end="url(#b-new)"/>
+          <rect x="616" y="330" width="236" height="90" rx="2" fill="var(--new-wash)" stroke="var(--new)"/>
+          <text class="svg-label-b" x="630" y="350" fill="var(--new)">checkpoint event</text>
+          <text class="svg-mono" x="630" y="368" fill="var(--new)">+ banner &amp; block chunks</text>
+          <text class="svg-mono" x="630" y="388" fill="var(--new)">tool_start / tool_done for</text>
+          <text class="svg-mono" x="630" y="404" fill="var(--new)">this tool: suppressed</text>
+
+          <!-- tool result back -->
+          <path class="svg-edge" d="M 324 388 L 290 388 L 290 262 L 324 262" marker-end="url(#b-ink)"/>
+          <text class="svg-mono" x="30" y="318" fill="var(--ink-soft)">tool_result back to the model:</text>
+          <text class="svg-mono" x="30" y="334" fill="var(--ink-soft)">“NOT your final answer —</text>
+          <text class="svg-mono" x="30" y="350" fill="var(--ink-soft)">continue now”</text>
+
+          <!-- model ignores -->
+          <path class="svg-edge" stroke-dasharray="5 4" d="M 570 270 L 584 270 L 584 440 L 306 440" marker-end="url(#b-faint)"/>
+          <rect class="svg-sunk" x="24" y="414" width="282" height="52" rx="2"/>
+          <text class="svg-label" x="38" y="434">model ignores the ask</text>
+          <text class="svg-mono" x="38" y="452">nothing emitted · re-asked next round, ≤3</text>
+
+          <!-- exits -->
+          <line class="svg-rule" x1="24" y1="492" x2="852" y2="492"/>
+          <text class="svg-lane" x="24" y="512">ON CANCEL · DEADLINE · COST CAP</text>
+          <text class="svg-mono" x="300" y="512" fill="var(--new)">runLoop defer: pendingCheckpointNote = "" — one flag reset.</text>
+          <text class="svg-mono" x="300" y="528" fill="var(--new)">Nothing was ever written to the transcript, so there is nothing to repair.</text>
+        </svg>
+      </div>
+      <figcaption>One emitter. The banner now arrives <em>with</em> the block, because both come from the handler — so “banner followed by silence” is not a state the system can be in. The note lives on one request and one <code>runState</code> field, which is what removes the repair pass rather than fixing it.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <p class="eyebrow">03 · the emission gate</p>
+    <h2>What decides that an SSE frame goes out</h2>
+    <p class="measure">Both designs gate the <code>checkpoint</code> event behind a chain of conditions. The difference is where the chain can fail, and what the user sees when it does.</p>
+
+    <figure>
+      <div class="scroller">
+        <svg viewBox="0 0 880 430" role="img" aria-label="Side-by-side decision chains. Before: armed turn, then the model must have written a tldr span, then a consumer must be attached; the middle condition is the one that fails and the banner has already been sent. After: the tool must be enabled for the run, the model must call it, fields must be usable, and it must not already have been delivered this turn; a failure at any step emits nothing at all.">
+          <defs>
+            <marker id="g-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ink-soft)"/>
+            </marker>
+          </defs>
+
+          <text class="svg-lane" x="24" y="26">BEFORE · PARSED FROM PROSE</text>
+          <text class="svg-lane" x="470" y="26">AFTER · TOOL CALL</text>
+          <line class="svg-rule" x1="440" y1="12" x2="440" y2="418"/>
+
+          <!-- before chain -->
+          <rect class="svg-box" x="24" y="44" width="380" height="40" rx="2"/>
+          <text class="svg-label" x="38" y="68">turn was armed — a note went out this turn</text>
+          <path class="svg-edge" d="M 214 84 L 214 104" marker-end="url(#g-ink)"/>
+
+          <rect x="24" y="104" width="380" height="56" rx="2" fill="var(--fail-wash)" stroke="var(--fail)"/>
+          <text class="svg-label-b" x="38" y="126" fill="var(--fail)">model wrote a &lt;tldr&gt; span in its text</text>
+          <text class="svg-mono" x="38" y="146" fill="var(--fail)">the step that fails — no text block, no span</text>
+          <path class="svg-edge" d="M 214 160 L 214 180" marker-end="url(#g-ink)"/>
+
+          <rect class="svg-box" x="24" y="180" width="380" height="40" rx="2"/>
+          <text class="svg-label" x="38" y="204">a consumer is attached (OnCheckpoint non-nil)</text>
+          <path class="svg-edge" d="M 214 220 L 214 240" marker-end="url(#g-ink)"/>
+
+          <rect x="24" y="240" width="380" height="44" rx="2" fill="var(--old-wash)" stroke="var(--old)"/>
+          <text class="svg-label-b" x="38" y="268" fill="var(--old)">emit checkpoint event</text>
+
+          <text class="svg-lane" x="24" y="314">WHEN THE CHAIN BREAKS</text>
+          <rect x="24" y="326" width="380" height="68" rx="2" fill="var(--fail-wash)" stroke="var(--fail)"/>
+          <text class="svg-label" x="38" y="348" fill="var(--fail)">the banner is already on the wire,</text>
+          <text class="svg-label" x="38" y="366" fill="var(--fail)">the 3-minute slot is spent,</text>
+          <text class="svg-label" x="38" y="384" fill="var(--fail)">and the note sits in history</text>
+
+          <!-- after chain -->
+          <rect class="svg-box" x="470" y="44" width="382" height="40" rx="2"/>
+          <text class="svg-label" x="484" y="68">tool enabled for this run (else refused at dispatch)</text>
+          <path class="svg-edge" d="M 661 84 L 661 104" marker-end="url(#g-ink)"/>
+
+          <rect class="svg-box" x="470" y="104" width="382" height="40" rx="2"/>
+          <text class="svg-label" x="484" y="128">model called report_checkpoint</text>
+          <path class="svg-edge" d="M 661 144 L 661 164" marker-end="url(#g-ink)"/>
+
+          <rect class="svg-box" x="470" y="164" width="382" height="40" rx="2"/>
+          <text class="svg-label" x="484" y="188">a tldr line, or at least one established fact</text>
+          <path class="svg-edge" d="M 661 204 L 661 224" marker-end="url(#g-ink)"/>
+
+          <rect class="svg-box" x="470" y="224" width="382" height="40" rx="2"/>
+          <text class="svg-label" x="484" y="248">not already delivered on this turn</text>
+          <path class="svg-edge" d="M 661 264 L 661 284" marker-end="url(#g-ink)"/>
+
+          <rect x="470" y="284" width="382" height="44" rx="2" fill="var(--new-wash)" stroke="var(--new)"/>
+          <text class="svg-label-b" x="484" y="312" fill="var(--new)">emit checkpoint event + banner &amp; block</text>
+
+          <text class="svg-lane" x="470" y="358">WHEN THE CHAIN BREAKS</text>
+          <rect x="470" y="370" width="382" height="40" rx="2" fill="var(--new-wash)" stroke="var(--new)"/>
+          <text class="svg-label" x="484" y="394" fill="var(--new)">nothing is emitted; asked again next round</text>
+        </svg>
+      </div>
+      <figcaption>The gates read similarly; the asymmetry is in the failure. Before, the chain breaks <em>after</em> the banner has been sent and the slot consumed, so a failure is visible to the user as an unanswered promise. After, every emission is downstream of the tool call, so a failure is silent and recoverable — the ask simply repeats on the next tool round.</figcaption>
+    </figure>
+
+    <table>
+      <thead>
+        <tr><th>decision</th><th>before</th><th>after</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>who emits</td>
+          <td>harness (banner) + stream filter (event) + model text (block) — three paths</td>
+          <td><span class="tag tag-new">one</span> the tool handler, for all three</td>
+        </tr>
+        <tr>
+          <td>trigger lives</td>
+          <td>in <code>session.Messages</code>, replayed every later turn</td>
+          <td>on one request, and one <code>runState</code> field</td>
+        </tr>
+        <tr>
+          <td>event condition</td>
+          <td>a reserved span appeared in the token stream</td>
+          <td>a tool call arrived with usable fields</td>
+        </tr>
+        <tr>
+          <td>ordering</td>
+          <td>banner first, content later or never</td>
+          <td>banner and block together, after the reply completes</td>
+        </tr>
+        <tr>
+          <td>tool frames</td>
+          <td>n/a</td>
+          <td>suppressed for this tool only — no activity row beside the checkpoint</td>
+        </tr>
+        <tr>
+          <td>cancel · cap · deadline</td>
+          <td>repair pass rewrites the message to pull the note out</td>
+          <td>one <code>defer</code> clears a flag</td>
+        </tr>
+        <tr>
+          <td>model ignores it</td>
+          <td class="num">banner stands alone; slot spent for 3 min</td>
+          <td class="num">nothing shown; re-asked next round, ≤3 per window</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <p class="eyebrow">04 · the wire</p>
+    <h2>What the UI receives is unchanged</h2>
+    <p class="measure">Taken from the SSE wire test, which drives the real agent loop and the real writer. The <code>checkpoint</code> frame has the same shape it always had; what changed is that nothing else can produce one.</p>
+    <div class="frames">data: {"correlation_id":"toolu_a","name":"exec_sql","tool":"exec_sql","type":"tool_start"}
+data: {"chunk":"\n\n---\n\n*⏱ This is turning into a longer investigation…*\n\n","channel":"reasoning"}
+data: {"chunk":"Established so far\n- pod-7 DB pool at 100/100 in use\n\nStill checking\n- …","channel":"reasoning"}
+<b>data: {"type":"checkpoint","index":1,"turn":2,"elapsed_seconds":181,"tldr":"checkout 5xx is confined to pod-7, whose DB pool is saturated"}</b>
+data: {"correlation_id":"toolu_b","name":"exec_sql","tool":"exec_sql","type":"tool_start"}</div>
+    <p class="measure">No <code>tool_start</code> or <code>tool_done</code> frame for <code>report_checkpoint</code> appears between them — the event <em>is</em> its output. The web bubble still finds the banner by its shape, the console writer still renders the one-line status, and the Slack status message still replaces the previous one.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">05 · what the shape change deletes</p>
+    <h2>Machinery that existed only to parse prose</h2>
+    <div class="cards">
+      <div class="card is-old">
+        <h3>Reserved markup</h3>
+        <p>The <code>&lt;tldr&gt;</code> tags, the filter that carved them out of the token stream mid-delta, the strip that kept them out of history — and the leak when a later turn wrote the tag on a turn the filter wasn’t armed for.</p>
+      </div>
+      <div class="card is-old">
+        <h3>Reply-shape guards</h3>
+        <p>The end-turn check for a reply that stopped <em>on</em> the progress block instead of continuing, and the nudge that pushed it back into the loop.</p>
+      </div>
+      <div class="card is-old">
+        <h3>Transcript repair</h3>
+        <p><code>dropUnansweredCheckpointNote</code> and the message surgery it did at two bail-out sites, plus the predicate that had to recognise every note variant exactly.</p>
+      </div>
+      <div class="card is-new">
+        <h3>What replaces them</h3>
+        <p>One tool definition, one handler, one request-only string. A tool call can’t end a turn and can’t be half-parsed, so the failure modes those guards existed for don’t arise.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">06 · evidence</p>
+    <h2>Why the shape change, and not a better note</h2>
+    <p class="measure">Four note rewordings were measured against the exact request Opus 5.5 ignored on copeyemg, replayed through the dev gateway, one call per arm. The tool is the only arm that holds.</p>
+    <table>
+      <thead><tr><th>arm</th><th>result</th><th>reading</th></tr></thead>
+      <tbody>
+        <tr><td>prose note (shipped)</td><td class="num">0 / 1</td><td>thinking + 3 tool_use, no text — reproduces production</td></tr>
+        <tr><td>note before tool_result</td><td class="num">400</td><td>a <code>tool_result</code> must immediately follow its <code>tool_use</code></td></tr>
+        <tr><td>shorter, imperative note</td><td class="num">0 / 1</td><td>thinking only; no text, no tools</td></tr>
+        <tr><td>“text block first” rule</td><td class="num">1 / 3</td><td>complied once — luck, not a fix</td></tr>
+        <tr><td><b>report_checkpoint tool</b></td><td class="num"><span class="tag tag-new">4 / 4</span></td><td>always the first tool call, fields usable</td></tr>
+        <tr><td>tool present, not asked for</td><td class="num">0 / 2</td><td>never called unprompted — so it can stay in the cached tool list</td></tr>
+      </tbody>
+    </table>
+    <p class="measure">On a live local run at a 5-second interval the tool path delivered <b>3 of 3</b> checkpoints with zero tool frames and no harness note in the transcript; the prose path delivered <b>0 of 3</b> on the same workload.</p>
+    <hr>
+    <p class="measure" style="color: var(--ink-soft); font-size: 0.95rem;">One asymmetry worth keeping in view: prose compliance is deployment-shaped, not broken everywhere. On dellmirror it has now worked twice — UI-originated runs, small tool results, a model already narrating in text blocks. On the Slack-originated copeyemg run, with 4 KB tool results and twenty consecutive text-free turns, it never fired. The tool call removes the variance; the deletions are what make it worth doing now rather than later.</p>
+  </section>
+</div>
