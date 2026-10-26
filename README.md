@@ -154,35 +154,52 @@ brew install neubirdai/tap/neubird-terminal
 sudo snap install neubird-terminal
 ```
 
+Release files include the version in their names (for example `neubird_1.0.128_windows_amd64.zip`), so the commands below look up the latest version first.
+
 ### Linux (Debian / Ubuntu)
 
 ```bash
-curl -LO https://github.com/neubirdai/neubird-terminal/releases/latest/download/neubird_linux_amd64.deb
-sudo dpkg -i neubird_linux_amd64.deb
+VERSION=$(curl -fsSL https://api.github.com/repos/neubirdai/neubird-terminal/releases/latest \
+  | sed -n 's/.*"tag_name": *"v*\([^"]*\)".*/\1/p')
+: "${VERSION:?could not resolve the latest release; check https://github.com/neubirdai/neubird-terminal/releases}"
+curl -fLO "https://github.com/neubirdai/neubird-terminal/releases/download/v${VERSION}/neubird_${VERSION}_linux_amd64.deb"
+sudo dpkg -i "neubird_${VERSION}_linux_amd64.deb"
 ```
+
+Replace `amd64` with `arm64` on 64-bit ARM.
 
 ### Linux (Fedora / RHEL)
 
 ```bash
-curl -LO https://github.com/neubirdai/neubird-terminal/releases/latest/download/neubird_linux_amd64.rpm
-sudo rpm -i neubird_linux_amd64.rpm
+VERSION=$(curl -fsSL https://api.github.com/repos/neubirdai/neubird-terminal/releases/latest \
+  | sed -n 's/.*"tag_name": *"v*\([^"]*\)".*/\1/p')
+: "${VERSION:?could not resolve the latest release; check https://github.com/neubirdai/neubird-terminal/releases}"
+curl -fLO "https://github.com/neubirdai/neubird-terminal/releases/download/v${VERSION}/neubird_${VERSION}_linux_amd64.rpm"
+sudo rpm -i "neubird_${VERSION}_linux_amd64.rpm"
 ```
+
+Replace `amd64` with `arm64` on 64-bit ARM.
 
 ### Windows
 
-Download `neubird_windows_amd64.zip` from the [latest release](https://github.com/neubirdai/neubird-terminal/releases/latest), extract it, and add the folder to your `PATH`:
+In PowerShell. The same commands install for the first time and upgrade an existing install:
 
 ```powershell
-# PowerShell — download and extract
-Invoke-WebRequest -Uri "https://github.com/neubirdai/neubird-terminal/releases/latest/download/neubird_windows_amd64.zip" -OutFile neubird.zip
-Expand-Archive neubird.zip -DestinationPath "$env:LOCALAPPDATA\neubird"
+$tag = (Invoke-RestMethod "https://api.github.com/repos/neubirdai/neubird-terminal/releases/latest").tag_name
+$version = $tag.TrimStart("v")
+# amd64 on standard PCs, arm64 on Snapdragon / Copilot+ PCs
+$arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64" -or $env:PROCESSOR_ARCHITEW6432 -eq "ARM64") { "arm64" } else { "amd64" }
+Invoke-WebRequest -Uri "https://github.com/neubirdai/neubird-terminal/releases/download/$tag/neubird_${version}_windows_${arch}.zip" -OutFile neubird.zip
+Expand-Archive neubird.zip -DestinationPath "$env:LOCALAPPDATA\neubird" -Force
 
 # Add to PATH (current session)
-$env:PATH += ";$env:LOCALAPPDATA\neubird"
+$env:Path += ";$env:LOCALAPPDATA\neubird"
 
-# Add to PATH (permanent — requires restart)
-[Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$env:LOCALAPPDATA\neubird", "User")
+# Add to PATH (permanent, for new terminals; only needed on first install)
+[Environment]::SetEnvironmentVariable("Path", "$([Environment]::GetEnvironmentVariable('Path','User'));$env:LOCALAPPDATA\neubird", "User")
 ```
+
+Or download the zip for your architecture from the [latest release](https://github.com/neubirdai/neubird-terminal/releases/latest) by hand.
 
 ### Docker
 
