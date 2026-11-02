@@ -1616,7 +1616,7 @@
     SESS --&gt; MFA[messagesForAPI — every turn]
 
     subgraph MFA_PIPE [messagesForAPI pipeline]
-        OFF[&quot;1 · offloadLargeDocuments&lt;br/&gt;big PDFs/docs → compact placeholder + docProjection;&lt;br/&gt;viewed PDF pages re-injected from run-durable accumulator;&lt;br/&gt;queryable via search_document / read_document /&lt;br/&gt;view_pdf_pages (PDF present, or text doc on an agent naming them) or code_exec doc_id: (text)&quot;]
+        OFF[&quot;1 · offloadLargeDocuments&lt;br/&gt;big PDFs/docs → compact placeholder + docProjection;&lt;br/&gt;viewed PDF pages re-injected from run-durable accumulator;&lt;br/&gt;queryable via search_document / read_document /&lt;br/&gt;view_pdf_pages (PDF present, or text doc on an agent naming them) or code_exec doc_id: (text, pcap)&quot;]
         OFF --&gt; TRIM[&quot;2 · trimMessages(current, budget)&lt;br/&gt;compress oldest tool_results, then drop oldest messages;&lt;br/&gt;didCompact → OnCompacting&quot;]
         TRIM --&gt; HIST[&quot;3 · prior-session history budget =&lt;br/&gt;min(historyBudget, totalBudget − current)&quot;]
         HIST --&gt; TIERS{buildACEHistoryMessages}
