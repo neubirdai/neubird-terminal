@@ -1247,9 +1247,11 @@
 </ul>
 <hr />
 <h2 id="custom-personas">Custom personas</h2>
-<p>You can add your own agent personas as <code>.md</code> files in <code>skills/agents/</code>. The frontmatter sets the model, speed, and quality rating; the body is appended to the system prompt.</p>
-<p><strong>Example:</strong> <code>skills/agents/cost-specialist.md</code></p>
+<p>You can add your own agent personas as <code>.md</code> files in <code>~/.config/neubird/agents/</code> (<code>$XDG_CONFIG_HOME/neubird/agents/</code> when <code>XDG_CONFIG_HOME</code> is set, <code>%AppData%\neubird\agents\</code> on Windows). The frontmatter sets the name, model, speed, and quality rating; <code>name</code> and <code>model</code> are required, and a file missing either is skipped. The body is appended to the system prompt. A file whose <code>name</code> matches a built-in persona replaces it.</p>
+<p><strong>Example:</strong> <code>~/.config/neubird/agents/cost-specialist.md</code></p>
 <pre><code class="language-markdown">---
+name: CostSpecialist
+description: Cloud cost breakdowns and projections
 model: claude-sonnet-5
 speed: 2
 quality: 2
