@@ -1413,7 +1413,7 @@
 <tr>
 <td><code>enable_citations</code></td>
 <td><code>EnableCitations</code></td>
-<td>Unlocks <code>store_and_verify_citation</code> + <code>list_tool_call_idx_catalog</code> and injects the citation-discipline prompt section</td>
+<td>Unlocks <code>store_and_verify_citation</code> + <code>list_tool_call_idx_catalog</code> and injects the citation-discipline prompt section (a catalog agent sets it as <code>metadata.enable_citations</code>; falcon streams a <code>citation</code> frame as each claim is verified)</td>
 </tr>
 <tr>
 <td><code>user_invocable</code></td>
