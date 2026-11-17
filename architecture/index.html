@@ -1066,6 +1066,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#agent-routing-agent-auto" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agent routing (agent: "auto")
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1511,6 +1522,16 @@
 <li>The session is stamped with the <strong>resolved</strong> agent (<code>def.Name</code>), so a run started as <code>L2</code> is recorded and filterable as <code>Laconic</code>.</li>
 <li><code>L1</code> and <code>L2</code> are two agents rather than one agent at two thinking settings on purpose. Model and thinking can only be pinned per <em>agent name</em> (<code>AGENT_MODEL_OVERRIDES</code>, the one lever that outranks a deployment-wide ConfigCat <code>InferenceModelOverride</code> — note frontmatter <code>model:</code> is the <strong>weakest</strong> signal, see <code>InferenceModelLabel</code>), and a distinct name is what makes an L1 run distinguishable from an L2 one in session metadata, agent-name filters and evals. <code>L1Laconic</code> shares Laconic's doctrine via <code>prompt_dir:</code> (one copy of the SOUL), the same arrangement <code>ChallengerSonnet</code> has with <code>Challenger</code>; <code>TestLaconicTiersDifferOnlyByThinking</code> fails the build if the pair drifts apart.</li>
 <li><code>FALCON_AGENT_TIERS</code> retargets tiers without a rebuild: <code>l3=DeepAnalyst,l1=Analyst</code>. Unlisted tiers keep their defaults; a malformed or unknown entry is logged and ignored rather than emptying a tier. Per deployment, the same value goes in the <code>agent_tiers</code> key of the <code>llms</code> ConfigCat squad JSON (raven forwards it top-level; <code>FetchLLMEnv</code> maps it to the env var set-if-empty, so a pod-level env var still wins). Like <code>llm_tier</code>, it is read at boot — restart falcon after changing the flag.</li>
+</ul>
+<h3 id="agent-routing-agent-auto">Agent routing (<code>agent: "auto"</code>)</h3>
+<p>A client that does not know which agent a message needs sends <code>auto</code>, or <code>auto:&lt;agent&gt;</code> to name the agent it runs without the router (a Slack @mention's triage sends <code>auto:SlackMentionListener</code>). <code>internal/agentrouter</code> picks from what the message asks NeuBird to do, judged against what each routable agent does (<code>internal/agentrouter/routing.json</code>, the text the routing eval measured). The client breaks ties only: an ordinary operational question from a Slack or Teams conversation, a Slack DM included, stays with the chat listener, from the web app or terminal with the investigation agent. A request to build a workflow, skill, notification or filter, or a question about NeuBird's own usage, goes to that agent from any client.</p>
+<ul>
+<li><strong>Who decides:</strong> Jev first; at confidence 0.8 or higher its pick stands. Below that, or when Jev is unavailable, the fallback model decides on the digest transport. When neither gives a usable pick, or the whole decision outlasts 10 seconds (<code>agentrouter.RouteTimeout</code>), the request runs the client's agent, as it would without <code>auto</code>.</li>
+<li><strong>What runs:</strong> a chat or investigate pick runs the client's agent (on a triage call, the listener still decides between a quick answer and an investigation). Any other pick runs that agent. On a triage call (the client's agent is a <code>triage: true</code> listener) such a pick runs nothing: <code>/v1/infer</code> answers with one listener verdict, <code>decision: "route"</code> and <code>agent: &lt;pick&gt;</code>, and the client forwards the message to that agent.</li>
+<li><strong>Follow-ups:</strong> each run that starts saves its prompt and agent under the session in Redis (<code>&lt;org&gt;:agent-router:turn:&lt;session&gt;</code>, 7 days), and the session's next <code>auto</code> message is routed knowing it.</li>
+<li><strong>Logs and traces:</strong> every decision is one <code>agent router</code> log line (the pick, who decided, both sides' picks and confidences, and timings; no message text) and one <code>falcon.agent_router</code> Langfuse trace: the message as input, the pick as output, the same fields as metadata, tagged <code>agent_router</code> plus <code>live</code> or <code>shadow</code>, and filed under the request's session. The fallback model's call nests under it.</li>
+<li><strong>Configuration:</strong> <code>FALCON_AGENT_ROUTER</code> is the per-deployment switch: <code>off</code> (the default; <code>auto</code> runs the client's agent and the router touches nothing, Redis included), <code>on</code> (route <code>auto</code> requests and act on the pick), or <code>shadow</code> (<code>auto</code> requests run the client's agent; they and every Slack/Teams @mention triage are routed in the background and only logged). <code>TYPESAFE_API_KEY</code> is Jev's key (unset, the model decides every message), <code>TYPESAFE_API_URL</code> its endpoint, <code>FALCON_AGENT_ROUTER_MODEL</code> the fallback model (default <code>claude-sonnet-5-5</code>), <code>FALCON_AGENT_ROUTER_MIN_CONFIDENCE</code> Jev's floor (default 0.8), <code>FALCON_AGENT_ROUTER_SHADOW_SAMPLE</code> the share of eligible requests shadow mode routes (0 to 1, default all).</li>
+<li>An <code>auto</code> request that reaches <code>resolveAgent</code> unrouted (a queued prompt, the submit path's credit check) runs the client's agent. So does one that also names an agent by <code>agent_uuid</code>, which outranks any pick.</li>
 </ul>
 <hr />
 <h2 id="core-agent-loop">Core Agent Loop</h2>
