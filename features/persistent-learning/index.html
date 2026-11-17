@@ -856,17 +856,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#table-learnings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Table Learnings
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#how-it-improves-over-time" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1113,17 +1102,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#table-learnings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Table Learnings
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#how-it-improves-over-time" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1163,17 +1141,12 @@
 
 
 <h1 id="persistent-learning">Persistent Learning</h1>
-<p>NeuBird gets smarter the more you use it. It accumulates two types of knowledge across sessions, stored server-side in ConfigDB and scoped to the project, so everyone working on that deployment shares one set of learnings.</p>
+<p>NeuBird gets smarter the more you use it. It accumulates SQL learnings across sessions, stored server-side in ConfigDB and scoped to the project, so everyone working on that deployment shares one set of learnings.</p>
 <hr />
 <h2 id="sql-learnings">SQL Learnings</h2>
 <p>When a SQL query fails — for example, because a specific function isn't supported by your database's Foreign Data Wrapper — NeuBird saves a rule about what doesn't work. On subsequent sessions, these rules are injected into the system prompt so NeuBird avoids repeating the same mistakes.</p>
 <p><strong>Example:</strong> If <code>SELECT date_trunc('hour', timestamp)</code> fails on a particular FDW, NeuBird learns to use an alternative like <code>date_trunc</code> with a different syntax or a workaround. Next time it encounters a similar query, it gets it right on the first try.</p>
 <p>Learnings are saved automatically when queries fail. View accumulated learnings with <code>/learnings</code>.</p>
-<hr />
-<h2 id="table-learnings">Table Learnings</h2>
-<p>At the end of each successful investigation, NeuBird records which tables contained the most useful data for that type of question. On future investigations, it can skip the schema exploration phase and go directly to the relevant tables.</p>
-<p><strong>Example:</strong> After investigating "What services have the highest error rates?", NeuBird learns that <code>trace_grafana_tempo.service_map</code> and <code>log_grafana_loki.logs</code> were the key tables. Next time someone asks about error rates, it queries those tables first instead of searching the entire schema.</p>
-<p>Table learnings are saved automatically. A maximum of 50 entries are kept, with older entries rotated out.</p>
 <hr />
 <h2 id="how-it-improves-over-time">How it improves over time</h2>
 <table>
@@ -1190,11 +1163,11 @@
 </tr>
 <tr>
 <td><strong>After a few sessions</strong></td>
-<td>NeuBird skips known-bad SQL patterns. Starts going directly to useful tables for repeat investigation types.</td>
+<td>NeuBird skips known-bad SQL patterns.</td>
 </tr>
 <tr>
 <td><strong>Regular use</strong></td>
-<td>Investigations are faster and more accurate. Schema exploration is minimal. FDW quirks are fully mapped.</td>
+<td>Investigations are faster and more accurate. FDW quirks are fully mapped.</td>
 </tr>
 </tbody>
 </table>
@@ -1218,7 +1191,7 @@
 </tr>
 </tbody>
 </table>
-<p>Learnings persist across sessions in ConfigDB (<code>ace.sql_learnings</code>, <code>ace.table_learnings</code>), written and read through ACE's memory tools. Nothing is kept on the machine running the CLI: a run without an ACE session still learns within that run, but drops what it learned at exit.</p>
+<p>Learnings persist across sessions in ConfigDB (<code>ace.sql_learnings</code>), written and read through ACE's memory tools. Nothing is kept on the machine running the CLI: a run without an ACE session still learns within that run, but drops what it learned at exit.</p>
 
 
 

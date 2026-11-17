@@ -1378,7 +1378,7 @@
 <tr>
 <td><code>context</code></td>
 <td><code>ContextSections</code></td>
-<td>Prompt-section opt-ins: <code>schema</code>, <code>learnings</code>, <code>insights</code>, <code>table_knowledge</code>, <code>tool_hints</code>, <code>*</code> (all of those), plus explicit-only <code>inferred_insights</code> (never in <code>*</code>)</td>
+<td>Prompt-section opt-ins: <code>schema</code>, <code>learnings</code>, <code>insights</code>, <code>tool_hints</code>, <code>*</code> (all of those), plus explicit-only <code>inferred_insights</code> (never in <code>*</code>)</td>
 </tr>
 <tr>
 <td><code>max_tokens</code></td>
@@ -1521,7 +1521,7 @@
     TO --&gt; EI[executeInternal]
 
     EI --&gt; RESOLVE[&quot;Resolve per-run state (fresh runState)&lt;br/&gt;• transport for def.Model&lt;br/&gt;• tool + skill allowlists (def / cfg)&lt;br/&gt;• base prompt: prompt-dir OR persona-on-Analyst.md&lt;br/&gt;• ContextSections → frozen memory prompt sections&lt;br/&gt;• citations, cost cap, structured-output state&quot;]
-    RESOLVE --&gt; PROMPTASM[&quot;buildPrompt = PromptAssembler(persona, date, base,&lt;br/&gt;schema, table, learnings, memory-tools, tool-hints,&lt;br/&gt;insights, citation-discipline, write-todos, skills)&quot;]
+    RESOLVE --&gt; PROMPTASM[&quot;buildPrompt = PromptAssembler(persona, date, base,&lt;br/&gt;schema, learnings, memory-tools, tool-hints,&lt;br/&gt;insights, citation-discipline, write-todos, skills)&quot;]
     PROMPTASM --&gt; USERMSG[&quot;Append user message&lt;br/&gt;(downscaled attachments, quick-budget prep)&quot;]
     USERMSG --&gt; LOOP
 
@@ -1674,7 +1674,7 @@
 </tr>
 <tr>
 <td>In-process learning cache</td>
-<td><code>internal/{learnings,tablelearnings}</code></td>
+<td><code>internal/learnings</code></td>
 <td>process memory — ConfigDB is the durable copy</td>
 </tr>
 </tbody>

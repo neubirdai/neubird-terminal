@@ -1278,17 +1278,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#table-learnings-memory-table-learnings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Table Learnings (memory-table-learnings)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#user-insights-memory-user-insights" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1438,7 +1427,7 @@
         ACEH[&quot;saveACEHistory / LoadACEHistory&lt;br/&gt;injected next session at&lt;br/&gt;tier 1 (full blocks) or 2/3 (compressed)&quot;]
     end
     subgraph long [&quot;Long-term knowledge (ACE, this doc)&quot;]
-        RAW[(&quot;Raw tables&lt;br/&gt;sql / table / user_insights / tool&quot;)]
+        RAW[(&quot;Raw tables&lt;br/&gt;sql / user_insights / tool&quot;)]
         ASSIM[(&quot;assimilated_learnings&lt;br/&gt;pgvector, per-project&quot;)]
     end
 
@@ -1454,19 +1443,18 @@
 <h2 id="how-memory-reaches-the-model-falcon-runtime">How Memory Reaches the Model (Falcon Runtime)</h2>
 <p>The ACE tools above are only half the story. The falcon side (<code>internal/ai/agent.go</code>) decides when memory is fetched, where it lands, and which agents see which parts.</p>
 <h3 id="stub-override-and-session-scoping">Stub override and session scoping</h3>
-<p>Falcon ships built-in <strong>stubs</strong> for <code>save_learnings</code>, <code>load_relevant_learnings</code>, and <code>update_memory</code> (<code>tools.go</code>). At <code>NewAgent</code>, these names are deliberately excluded from the duplicate-suppression map so ACE's <code>tools/list</code> <strong>overrides</strong> them — the wire schema and behavior are ACE's, while the stub definitions remain the offline fallback. Get-all tools (<code>user_insights</code>, <code>table_learnings</code>, <code>sql_learnings</code>) arrive <code>HiddenFromLLM</code>: registered with a session, callable by falcon code, never shown to the model.</p>
+<p>Falcon ships built-in <strong>stubs</strong> for <code>save_learnings</code>, <code>load_relevant_learnings</code>, and <code>update_memory</code> (<code>tools.go</code>). At <code>NewAgent</code>, these names are deliberately excluded from the duplicate-suppression map so ACE's <code>tools/list</code> <strong>overrides</strong> them — the wire schema and behavior are ACE's, while the stub definitions remain the offline fallback. Get-all tools (<code>user_insights</code>, <code>sql_learnings</code>) arrive <code>HiddenFromLLM</code>: registered with a session, callable by falcon code, never shown to the model.</p>
 <p>Each prompt opens its own ACE session and closes it on release (<code>mcp_pool.go</code>, <code>agent.go</code>), scoped by <code>connect_database({database: projectUUID})</code> — project identity is session state, never a tool parameter. The learning queue is the exception: it keeps its own long-lived background session per project (<code>learning_queue.go</code>) so its writes never compete with the prompt's.</p>
 <h3 id="investigation-time-flow">Investigation-time flow</h3>
 <pre><code class="language-mermaid">flowchart TD
     EX[&quot;Execute(prompt)&quot;] --&gt; PRE[&quot;ensureMemoryLoaded(prompt) — once per agent&lt;br/&gt;load_relevant_learnings(query=prompt, include_raw=true)&lt;br/&gt;(skipped when cfg.DisableMemory — eval 'memory off' arm)&quot;]
     PRE --&gt; MERGE[&quot;mergeMemoryResult routes each entry by type&lt;br/&gt;(memorySeenIDs dedups across loads;&lt;br/&gt;deleted ids are pinned so they never re-merge)&quot;]
     MERGE --&gt;|sql| SQLC[&quot;sqlLearnings cache → SQL-learnings section&quot;]
-    MERGE --&gt;|table| TBLC[&quot;table cache → Table-knowledge section&quot;]
     MERGE --&gt;|tool| HINT[&quot;tool hints → Tool-hints section&quot;]
     MERGE --&gt;|&quot;insight (provenance)&quot;| INS[&quot;insights cache → User-insights section&lt;br/&gt;explicit: always rendered&lt;br/&gt;inferred: only with 'inferred_insights' opt-in&quot;]
     MERGE --&gt;|tribal_knowledge| SKIP[&quot;no local cache — recall-on-demand only&quot;]
 
-    SQLC &amp; TBLC &amp; HINT &amp; INS --&gt; GATE{&quot;AgentDefinition.ContextSections&lt;br/&gt;('context:' frontmatter) opt-in?&quot;}
+    SQLC &amp; HINT &amp; INS --&gt; GATE{&quot;AgentDefinition.ContextSections&lt;br/&gt;('context:' frontmatter) opt-in?&quot;}
     GATE --&gt;|yes| FROZEN[&quot;Sections FROZEN into statics per run&lt;br/&gt;(mid-run saves don't bust the prompt cache)&quot;]
     GATE --&gt;|no| OMIT[&quot;Section omitted for this agent&quot;]
     FROZEN --&gt; SYS[&quot;System prompt&lt;br/&gt;(+ promptsections.MemoryTools() guidance&lt;br/&gt;when 'learnings' is enabled)&quot;]
@@ -1478,11 +1466,10 @@
     LOOP --&gt;|&quot;exec_sql error&quot;| AUTO[&quot;autoSaveColumnLearning / autoSaveGroupByLearning&lt;br/&gt;+ MANDATORY save_learnings nudge appended&lt;br/&gt;to the tool result&quot;]
     SV --&gt; QUEUE[&quot;learning_queue.go — 2 background workers&lt;br/&gt;persist to ACE with explicit project_uuid&quot;]
 </code></pre>
-<p>Legacy fallbacks: without an ACE <code>save_learnings</code> session, writes route to the older per-type ACE tools via <code>EnqueueLearning</code>, or to the local jsonl stores (<code>internal/learnings</code>, <code>internal/tablelearnings</code>, <code>internal/feedback</code>) — which are <strong>caches/queues, not the source of truth</strong>.</p>
+<p>Legacy fallbacks: without an ACE <code>save_learnings</code> session, writes route to the older per-type ACE tools via <code>EnqueueLearning</code>, or to the local jsonl stores (<code>internal/learnings</code>, <code>internal/feedback</code>) — which are <strong>caches/queues, not the source of truth</strong>.</p>
 <h3 id="sharp-edges-falcon-side">Sharp edges (falcon side)</h3>
 <ul>
 <li><code>user_insights</code> get-all emits raw ids as <code>raw-&lt;N&gt;</code>, but <code>update_memory</code> routes raw insight ids as <code>insight-&lt;N&gt;</code> — callers must translate the prefix.</li>
-<li><code>table_learnings</code> get-all returns <strong>no ids</strong>, so its rows are currently untargetable by <code>update_memory</code>'s <code>table-N</code> route.</li>
 <li>Memory tools are excluded from <code>isDataTool</code>, so their output never counts toward data-read metrics (desktop shows <code>DATA 0 B</code> for memory-only runs — by design).</li>
 <li><code>cfg.DisableMemory</code> both strips the memory tools (deny-list) and turns off every memory-derived prompt section, fully isolating the A/B "memory off" arm.</li>
 </ul>
@@ -1501,11 +1488,6 @@
 <td><strong>sql</strong></td>
 <td>Query patterns and rules for specific tables/schemas</td>
 <td>"Always filter <code>events</code> by <code>org_id</code> first for performance"</td>
-</tr>
-<tr>
-<td><strong>table</strong></td>
-<td>Which tables map to which investigation scenarios</td>
-<td>"Use <code>deployments</code> + <code>rollbacks</code> for deploy-regression queries"</td>
 </tr>
 <tr>
 <td><strong>insight</strong></td>
@@ -1531,11 +1513,10 @@
 <p>All memory lives in the <code>ace</code> PostgreSQL schema, backed by the <code>pgvector</code> extension.</p>
 <h3 id="raw-tables-write-first-unprocessed">Raw Tables (write-first, unprocessed)</h3>
 <pre><code class="language-text">ace.sql_learnings        — SQL rules keyed by schema_table_type
-ace.table_learnings      — scenario-to-table mappings with investigation context
 ace.user_insights        — user corrections, preferences, facts
 ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 </code></pre>
-<p>All four tables carry a <code>project_uuid TEXT NOT NULL</code> column (added in migration <code>20260521000001_learnings_project_uuid</code>). Every raw row starts with <code>assimilated_at IS NULL</code>. The background job sets this field once the row has been consolidated.</p>
+<p>All three tables carry a <code>project_uuid TEXT NOT NULL</code> column (added in migration <code>20260521000001_learnings_project_uuid</code>). Every raw row starts with <code>assimilated_at IS NULL</code>. The background job sets this field once the row has been consolidated.</p>
 <p>Partial indexes on <code>(project_uuid) WHERE assimilated_at IS NULL</code> enable fast per-project discovery of pending work.</p>
 <h3 id="consolidated-store">Consolidated Store</h3>
 <pre><code class="language-text">ace.assimilated_learnings
@@ -1562,7 +1543,7 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 <tr>
 <td><code>type</code></td>
 <td>TEXT</td>
-<td><code>sql</code> | <code>table</code> | <code>user_insight</code> | <code>tool</code></td>
+<td><code>sql</code> | <code>user_insight</code> | <code>tool</code></td>
 </tr>
 <tr>
 <td><code>learning</code></td>
@@ -1602,7 +1583,7 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 <tr>
 <td><code>investigation_type</code></td>
 <td>TEXT</td>
-<td>Context for table learnings</td>
+<td>Deprecated; unused</td>
 </tr>
 <tr>
 <td><code>insight_type</code></td>
@@ -1643,7 +1624,7 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 <h3 id="save_learnings"><code>save_learnings</code></h3>
 <p>Writes a raw learning to the appropriate raw table.</p>
 <pre><code class="language-text">save_learnings(type, content, ...)
-  → writes to sql_learnings, table_learnings, user_insights, or tool_learnings
+  → writes to sql_learnings, user_insights, or tool_learnings
   → stores project_uuid from MCP args or session context
   → assimilated_at = NULL (pending)
   → returns {&quot;status&quot;: &quot;ok&quot;, &quot;type&quot;: &quot;&lt;type&gt;&quot;}
@@ -1661,7 +1642,6 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 <p><strong>Search strategy per type:</strong></p>
 <ul>
 <li><strong>SQL</strong> — exact match on <code>schema_table_type</code> (no vector needed)</li>
-<li><strong>Table</strong> — Reciprocal Rank Fusion (RRF) of vector + text, blended with confidence: <code>0.75 × RRF + 0.25 × confidence</code></li>
 <li><strong>User insights</strong> — vector similarity + always-trigger records appended</li>
 <li><strong>Tool</strong> — exact match on <code>tool_name</code>, or semantic query when <code>tool_name</code> is omitted</li>
 </ul>
@@ -1685,10 +1665,9 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 <p><strong>Source:</strong> <a href="https://github.com/neubirdai/ace/blob/main/tools/update_memory/mcp_tool_update_memory.go"><code>ace/tools/update_memory/mcp_tool_update_memory.go</code></a></p>
 <hr />
 <h3 id="list_unassimilated_learnings"><code>list_unassimilated_learnings</code></h3>
-<p>Discovery tool for the MemoryAssimilator agent. Returns up to 50 rows per type from the last 10 days where <code>assimilated_at IS NULL</code>, filtered by <code>project_uuid</code>. Covers all four raw tables in a single call:</p>
+<p>Discovery tool for the MemoryAssimilator agent. Returns up to 50 rows per type from the last 10 days where <code>assimilated_at IS NULL</code>, filtered by <code>project_uuid</code>. Covers all three raw tables in a single call:</p>
 <pre><code class="language-text">{
   &quot;sql_learnings&quot;:   [...],
-  &quot;table_learnings&quot;: [...],
   &quot;user_insights&quot;:   [...],
   &quot;tool_learnings&quot;:  [...]
 }
@@ -1704,7 +1683,7 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 <pre><code class="language-text">update_learning_assimilation(table, id, learning, summary, confidence, ...)
   → inserts new assimilated record OR merges into existing (append source_id)
   → sets assimilated_at = now() on the raw row
-  → generates 512-dim embedding for table/insight types
+  → generates 512-dim embedding for insight types
 </code></pre>
 <p><strong>Restricted:</strong> MemoryAssimilator agent only.</p>
 <p><strong>Source:</strong> <a href="https://github.com/neubirdai/ace/blob/main/tools/update_learning_assimilation/mcp_tool_update_assimilation.go"><code>ace/tools/update_learning_assimilation/mcp_tool_update_assimilation.go</code></a></p>
@@ -1744,7 +1723,7 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 </tbody>
 </table>
 <p><strong>Tools available:</strong> <code>list_unassimilated_learnings</code>, <code>update_learning_assimilation</code>, <code>load_relevant_learnings</code>, <code>update_memory</code>, <code>get_skill</code>, <code>get_prompt</code></p>
-<p><strong>Skills loaded per type:</strong> <code>memory-sql-learnings</code>, <code>memory-table-learnings</code>, <code>memory-user-insights</code>, <code>memory-forget-requests</code>, <code>memory-tool-learnings</code></p>
+<p><strong>Skills loaded per type:</strong> <code>memory-sql-learnings</code>, <code>memory-user-insights</code>, <code>memory-forget-requests</code>, <code>memory-tool-learnings</code></p>
 <p><strong>Pre-execution hook:</strong> Before the agent runs, <code>CheckNeedsLearning</code> calls <code>list_unassimilated_learnings</code> scoped to the project. If no pending rows exist the run is skipped entirely, avoiding unnecessary Haiku calls.</p>
 <hr />
 <h3 id="execlearningsagent">ExecLearningsAgent</h3>
@@ -1857,33 +1836,6 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
 </tbody>
 </table>
 <hr />
-<h3 id="table-learnings-memory-table-learnings">Table Learnings (<code>memory-table-learnings</code>)</h3>
-<p><strong>Skill:</strong> <a href="https://github.com/neubirdai/falcon/blob/main/skills/memory-table-learnings/SKILL.md"><code>skills/memory-table-learnings/SKILL.md</code></a></p>
-<p>Table learnings accumulate over time and are <strong>merged</strong> when a new row is semantically identical or very similar to an existing one.</p>
-<p><strong>For each raw <code>table_learnings</code> row:</strong></p>
-<ol>
-<li><strong>Validate against investigation context</strong> (if <code>prompt_id</code> present):</li>
-<li>Call <code>get_prompt()</code> to retrieve the investigation</li>
-<li>Cross-reference tool calls and <code>final_answer</code> to validate which candidate tables actually had evidence</li>
-<li>Update the <code>tables</code> field to only include validated tables</li>
-<li>If <code>get_prompt</code> fails → treat as no context, proceed with confidence 0.5</li>
-<li>
-<p>If investigation status is not COMPLETED or confidence &lt; 0.5 → mark inconclusive (confidence 0.1)</p>
-</li>
-<li>
-<p><strong>Deduplicate</strong> via <code>load_relevant_learnings(type="table", include_raw=true)</code>:</p>
-</li>
-<li><strong>Identical</strong> → merge with <code>merge_into_id=&lt;existing_id&gt;</code> (no new record)</li>
-<li><strong>Same insight, slight variation</strong> → merge with updated learning capturing both cases; increase confidence by ≤ 0.1</li>
-<li><strong>Multiple near-duplicates</strong> → delete all but the highest-confidence record, merge into the survivor</li>
-<li>
-<p><strong>Different insight</strong> → proceed to step 3</p>
-</li>
-<li>
-<p><strong>Insert as new</strong> via <code>update_learning_assimilation</code> with table_learnings data</p>
-</li>
-</ol>
-<hr />
 <h3 id="user-insights-memory-user-insights">User Insights (<code>memory-user-insights</code>)</h3>
 <p><strong>Skill:</strong> <a href="https://github.com/neubirdai/falcon/blob/main/skills/memory-user-insights/SKILL.md"><code>skills/memory-user-insights/SKILL.md</code></a></p>
 <p>User insights are <strong>merged or inserted</strong> based on semantic similarity. The <code>trigger</code> field controls whether a preference is always returned or only returned on semantic match.</p>
@@ -1949,11 +1901,6 @@ Memory Assimilation (MemoryAssimilator)
   ├── SQL learnings:
   │     └── upsert by schema_table_type into assimilated_learnings
   │
-  ├── Table learnings:
-  │     ├── validate against investigation context (get_prompt)
-  │     ├── deduplicate via load_relevant_learnings (include_raw=true)
-  │     └── insert new or merge into existing
-  │
   ├── User insights:
   │     ├── deduplicate via load_relevant_learnings (include_raw=true)
   │     ├── set trigger=&quot;always&quot; for preferences only
@@ -1983,7 +1930,7 @@ Next investigation:
 <p><strong>Soft deletes everywhere</strong> — <code>deleted_at</code> timestamps preserve audit history and allow undo. Queries always filter <code>WHERE deleted_at IS NULL</code>.</p>
 <p><strong>Two-phase architecture</strong> — Raw capture is non-blocking; expensive operations (embedding generation, deduplication, merging) happen asynchronously in the background job.</p>
 <p><strong>Assimilation idempotence</strong> — SQL learnings upsert by <code>schema_table_type</code> (one record per table). <code>assimilated_at</code> prevents the same raw row from being processed twice.</p>
-<p><strong>Hybrid search with graceful degradation</strong> — Vector + text search combined via RRF for table and user insight types. Falls back to keyword-only search if the embedder is unavailable.</p>
+<p><strong>Hybrid search with graceful degradation</strong> — Vector + text search combined via RRF for user insight types. Falls back to keyword-only search if the embedder is unavailable.</p>
 <p><strong>Multi-source merge tracking</strong> — <code>source_ids TEXT[]</code> links each assimilated record back to its raw sources, enabling safe cascade deletes and transparent lineage.</p>
 <p><strong>Always-trigger preferences</strong> — User insights of subtype <code>preference</code> are tagged <code>trigger="always"</code> so they are returned on every <code>load_relevant_learnings</code> call, regardless of semantic similarity. Other subtypes are returned only when the query matches.</p>
 <hr />
@@ -2024,10 +1971,6 @@ Next investigation:
 <tr>
 <td><a href="https://github.com/neubirdai/ace/blob/main/store/pg_sql_learnings.go"><code>ace/store/pg_sql_learnings.go</code></a></td>
 <td>SQL learnings store (project-scoped)</td>
-</tr>
-<tr>
-<td><a href="https://github.com/neubirdai/ace/blob/main/store/pg_table_learnings.go"><code>ace/store/pg_table_learnings.go</code></a></td>
-<td>Table learnings store (project-scoped)</td>
 </tr>
 <tr>
 <td><a href="https://github.com/neubirdai/ace/blob/main/store/pg_user_insights.go"><code>ace/store/pg_user_insights.go</code></a></td>
@@ -2087,10 +2030,6 @@ Next investigation:
 <tr>
 <td><a href="https://github.com/neubirdai/falcon/blob/main/skills/memory-sql-learnings/SKILL.md"><code>skills/memory-sql-learnings/SKILL.md</code></a></td>
 <td>SQL assimilation rules</td>
-</tr>
-<tr>
-<td><a href="https://github.com/neubirdai/falcon/blob/main/skills/memory-table-learnings/SKILL.md"><code>skills/memory-table-learnings/SKILL.md</code></a></td>
-<td>Table assimilation rules</td>
 </tr>
 <tr>
 <td><a href="https://github.com/neubirdai/falcon/blob/main/skills/memory-user-insights/SKILL.md"><code>skills/memory-user-insights/SKILL.md</code></a></td>
