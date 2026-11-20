@@ -1153,6 +1153,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="save_learnings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#saves-the-person-confirmed-confirm_saves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Saves the person confirmed (confirm_saves)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -1630,6 +1647,9 @@ ace.tool_learnings       — tool syntax error patterns keyed by tool_name
   → returns {&quot;status&quot;: &quot;ok&quot;, &quot;type&quot;: &quot;&lt;type&gt;&quot;}
 </code></pre>
 <p>Called by agents during or after investigations. Non-blocking.</p>
+<p>An insight saved by a store that can say which row it made returns that id too (<code>{"status": "ok", "type": "insight", "id": "insight-41"}</code>), the form <code>update_memory</code> takes.</p>
+<h4 id="saves-the-person-confirmed-confirm_saves">Saves the person confirmed (<code>confirm_saves</code>)</h4>
+<p>Agents that declare <code>confirm_saves: true</code> (the Home pipeline's chat executors) save only on the person's yes, and an Undo removes the saved fact from the agent's prompt too. The flow is in <code>internal/ai/confirm_saves.go</code> and the <code>remember</code> skill; this page does not repeat it. Undo needs the id the save returns, which depends on ACE returning it (ace#1376): without it the save still works and the chat says it cannot be undone.</p>
 <p><strong>Source:</strong> <a href="https://github.com/neubirdai/ace/blob/main/tools/save_memory/mcp_tool_save_memory.go"><code>ace/tools/save_memory/mcp_tool_save_memory.go</code></a></p>
 <hr />
 <h3 id="load_relevant_learnings"><code>load_relevant_learnings</code></h3>
