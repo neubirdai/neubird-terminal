@@ -1469,7 +1469,7 @@
 <tr>
 <td><code>credit_unit</code></td>
 <td><code>CreditUnit</code></td>
-<td>What <code>credit_cost</code> is charged against: <code>session</code> (default — first prompt only, follow-ups free) or <code>prompt</code> (every prompt). Listener agents bill only a <code>quick</code> verdict</td>
+<td>What <code>credit_cost</code> is charged against: <code>session</code> (default — full price on the first prompt, each follow-up 0.25, never more than <code>credit_cost</code>) or <code>prompt</code> (every prompt). Listener agents bill only a <code>quick</code> verdict. A Risk Sentinel task run (<code>risk_sentinel</code> on the request) of a priced agent costs 0.5 for the whole run</td>
 </tr>
 </tbody>
 </table>
